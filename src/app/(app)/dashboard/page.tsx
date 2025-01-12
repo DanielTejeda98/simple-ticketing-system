@@ -10,7 +10,7 @@ export default function Dashboard () {
     return (
         <main className="flex flex-col w-full">
             <div className="bg-gradient-to-r from-sky-500 to-indigo-500 bg-clip-text px-4 md:px-8 mt-6 md:mt-[10vh] max-h-fit">
-                <h1 className="text-4xl md:text-8xl text-transparent">Hi {user.firstName}</h1>
+                <h1 className="text-4xl md:text-8xl text-transparent">Hi, {user.firstName}</h1>
                 <p className="text-xl md:text-3xl text-transparent">What are you looking to do today?</p>
             </div>
 
@@ -59,7 +59,7 @@ export default function Dashboard () {
                         <CardDescription>Manage projects and the users assigned to projects</CardDescription>
                     </CardContent>
                     <CardFooter>
-                        <Button type="button">Project Management</Button>
+                        <Link href={"/projects"}><Button type="button">Project Management</Button></Link>
                     </CardFooter>
                 </Card>
 

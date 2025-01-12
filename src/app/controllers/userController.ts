@@ -164,6 +164,44 @@ export const resetUserPassword = async (token: string, details: z.infer<typeof R
     }
 } 
 
+export const getAllUsers = async () => {
+    await dbConnect();
+
+    try { 
+        const users = await userModel.find({});
+        return users;
+    } catch (error) {
+        console.log(error);
+        throw error;
+    }
+}
+
+export const getUser = async (id: string): Promise<User|null> => {
+    await dbConnect();
+
+    try { 
+        const user = await userModel.findOne({_id: new mongoose.Types.ObjectId(id)}).select("email firstName lastName avatar").exec();
+        return user;
+    } catch (error) {
+        console.log(error);
+        throw error;
+    }
+}
+
+export const getUsers = async (id: string[]): Promise<User[]|null> => {
+    await dbConnect();
+
+    const ObjectIds = id.map(id => new mongoose.Types.ObjectId(id));
+
+    try { 
+        const users = await userModel.find({_id: { $in: ObjectIds }}).select("email firstName lastName avatar").exec();
+        return users;
+    } catch (error) {
+        console.log(error);
+        throw error;
+    }
+}
+
 const findUserByEmailOrUsername = async (providedIdentification: string): Promise<User|null> => {
     return await userModel.findOne({$or: [
         { username: {

@@ -9,10 +9,12 @@ import Link from "next/link";
 
 export default function Sidebar () {
     const { data } = useSession();
-    const user = data!.user!;
+
+    if (!data) return null;
+    const user = data.user!;
 
     return (
-        <div className="flex bg-blue-600 border-b border-slate-200 px-2 py-3 justify-between md:flex-col md:h-dvh md:border-r md:border-b-0">
+        <div className="flex bg-blue-600 border-b border-slate-200 px-2 py-3 justify-between md:flex-col md:h-dvh md:border-r md:border-b-0 sticky top-0">
             <div className="flex md:flex-col">
                 <div className="hidden md:flex flex-col md:border-b md:pb-2">
                     <Button variant={"outline"}>
@@ -20,7 +22,7 @@ export default function Sidebar () {
                     </Button>
                 </div>
 
-                <div className="hidden md:flex flex-col pt-2 text-white">
+                <div className="md:flex flex-col md:pt-2 text-white">
                     <Link href="/dashboard">
                         <Button variant={"ghost"}>
                             <FontAwesomeIcon icon={faHome} />

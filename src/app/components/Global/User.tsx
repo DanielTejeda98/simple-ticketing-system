@@ -7,7 +7,7 @@ type DisplayUser = {
     title: string
 }
 
-export default function User ({user}: {user: DisplayUser}) {
+export default function User ({user, onlyName}: {user: DisplayUser, onlyName?: boolean}) {
     return (
         <div className="flex gap-2 items-center">
             <Avatar>
@@ -19,12 +19,20 @@ export default function User ({user}: {user: DisplayUser}) {
                 <p>
                     {user.firstName} {user.lastName}
                 </p>
-                <p>
-                    {user.email}
-                </p>
-                <p>
-                    {user.title}
-                </p>
+                {
+                    !onlyName 
+                    ? (
+                        <>
+                            <p>
+                                {user.email}
+                            </p>
+                            <p>
+                                {user.title}
+                            </p>
+                        </>
+                    ) : null
+                }
+                
             </div>
         </div>
     )

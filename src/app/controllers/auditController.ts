@@ -16,6 +16,7 @@ export const getAudits = async () => {
             model: userModel,
             select: "username firstName lastName avatar title email"
         })
+        .sort({ timestamp: -1})
         .exec();
     } catch (error) {
         throw error;

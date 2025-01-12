@@ -1,4 +1,4 @@
-export default function WelcomeEmailTemplate (userName: string): string {
+export default function ProjectAssignedEmailTemplate (project, newAssignee, oldAssignee, updater): string {
     return `
         <!DOCTYPE html>
 <html lang="en">
@@ -6,7 +6,7 @@ export default function WelcomeEmailTemplate (userName: string): string {
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Welcome to [Company/Product Name]</title>
+    <title>Project assigned to you</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -44,14 +44,14 @@ export default function WelcomeEmailTemplate (userName: string): string {
 </head>
 <body>
     <div class="container">
-        <h1>Welcome to Simple Ticketing System!</h1>
-        <p>Hi ${userName},</p>
-        <p>We're excited to have you on board! Get ready to explore and enjoy all the features we have to offer.</p>
+        <h1>${project.name} has been assigned to you.</h1>
+        <p>Hi ${newAssignee.firstName},</p>
+        <p>You have been assigned as a resource for ${project.name} by ${updater.firstName} ${updater.lastName}.</p>
         <p>Click below to get started:</p>
-        <a href="${process.env.DOMAIN}" class="button">Get Started</a>
+        <a href="${process.env.DOMAIN}/projects/${project.slug}" class="button">See Project</a>
         <p>If you have any questions, feel free to reach out to our support team.</p>
         <div class="footer">
-            <p>Thank you for joining us,<br>The Simple Ticketing System Team</p>
+            <p>The Simple Ticketing System Team</p>
             <p><a href="www.danieltejeda.dev">www.danieltejeda.dev</a> | <a href="mailto:daviddan1998@gmail.com">Contact Support</a></p>
         </div>
     </div>

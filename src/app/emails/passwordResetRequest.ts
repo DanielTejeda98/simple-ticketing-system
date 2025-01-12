@@ -28,7 +28,7 @@ export default function PasswordResetEmailTemplate (token: string, userName: str
             padding: 10px 20px;
             margin-top: 20px;
             font-size: 16px;
-            color: #ffffff;
+            color: #ffffff!important;
             background-color: #007BFF;
             text-decoration: none;
             border-radius: 4px;
