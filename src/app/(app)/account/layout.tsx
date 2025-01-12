@@ -2,7 +2,7 @@ import Sidebar from "@/app/components/Global/Sidebar";
 import AuthProvider from "@/app/providers/AuthProvier";
 import { getInitialLoad } from "@/app/utils/getIntialLoad";
 
-export default async function DashboardLayout ({
+export default async function AccountLayout ({
     children,
   }: Readonly<{
     children: React.ReactNode;

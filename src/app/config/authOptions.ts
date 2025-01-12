@@ -57,10 +57,6 @@ export const authOptions: NextAuthOptions = {
     },
     callbacks: {
         async jwt({token, user, account }: {token: any, user: any, account: any}) {
-            
-            console.log("token", token)
-            console.log("user", user)
-            console.log("account", account)
             await dbConnect()
             const foundUser = await userModel.findOne({ email: token.email })
             if (account && user && foundUser) {

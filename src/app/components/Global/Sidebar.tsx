@@ -4,26 +4,30 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faPlus, faSearch, faGear, faDoorClosed } from '@fortawesome/free-solid-svg-icons'
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
-import { signOut } from "next-auth/react";
+import { signOut, useSession } from "next-auth/react";
+import Link from "next/link";
 
 export default function Sidebar () {
+    const { data } = useSession();
+    const user = data!.user!;
+
     return (
-        <div className="flex flex-col h-dvh bg-blue-600 border-r border-slate-200 px-2 py-3 justify-between">
-            <div className="flex flex-col">
-                <div className="flex flex-col border-b pb-2">
+        <div className="flex bg-blue-600 border-b border-slate-200 px-2 py-3 justify-between md:flex-col md:h-dvh md:border-r md:border-b-0">
+            <div className="flex md:flex-col">
+                <div className="hidden md:flex flex-col md:border-b md:pb-2">
                     <Button variant={"outline"}>
                         <FontAwesomeIcon icon={faPlus} />
                     </Button>
                 </div>
 
-                <div className="flex flex-col pt-2 text-white">
+                <div className="hidden md:flex flex-col pt-2 text-white">
                     <Button variant={"ghost"}>
                         <FontAwesomeIcon icon={faSearch} />
                     </Button>
                 </div>
             </div>
 
-            <div className="flex flex-col items-center gap-2">
+            <div className="flex md:flex-col items-center gap-2">
                 <Button variant={"ghost"} className="text-white">
                     <FontAwesomeIcon icon={faGear} />
                 </Button>
@@ -31,30 +35,30 @@ export default function Sidebar () {
                 <Popover>
                     <PopoverTrigger>
                         <Avatar>
-                            <AvatarImage></AvatarImage>
-                            <AvatarFallback>DT</AvatarFallback>
+                            <AvatarImage src={user.avatar || ""}></AvatarImage>
+                            <AvatarFallback>{user.firstName.substring(0,1)}{user.lastName.substring(0,1)}</AvatarFallback>
                         </Avatar>
                     </PopoverTrigger>
                     <PopoverContent className="ml-2">
                         <div className="flex gap-2 items-center border-b">
                             <Avatar>
                                 <AvatarImage></AvatarImage>
-                                <AvatarFallback>DT</AvatarFallback>
+                                <AvatarFallback>{user.firstName.substring(0,1)}{user.lastName.substring(0,1)}</AvatarFallback>
                             </Avatar>
 
                             <div>
                                 <p>
-                                    Daniel Tejeda
+                                    {user.firstName} {user.lastName}
                                 </p>
                                 <p>
-                                    daviddan1998@gmail.com
+                                    {user.email}
                                 </p>
                             </div>
                         </div>
 
                         <div className="flex flex-wrap gap-3 mt-3">
                             <Button className="w-full">
-                                <FontAwesomeIcon icon={faGear} /> User settings
+                                <Link href={"/account"}><FontAwesomeIcon icon={faGear} /> User settings</Link>
                             </Button>
 
                             <Button className="w-full" variant={"destructive"} onClick={() => signOut()}>
