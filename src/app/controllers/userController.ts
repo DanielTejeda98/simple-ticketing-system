@@ -10,6 +10,8 @@ import PasswordResetEmailTemplate from "../emails/passwordResetRequest";
 import ResetPasswordFormSchema from "../components/Accounts/ResetPasswordForm/ResetPasswordFormSchema";
 import PasswordResetSuccessfulEmailTemplate from "../emails/passwordResetSuccessful";
 import WelcomeEmailTemplate from "../emails/welcome";
+import createLogEvent, { LOGGER_EVENTS } from "../lib/logger";
+import mongoose from "mongoose";
 
 export const isThereUsers = async () => {
     await dbConnect();
@@ -54,6 +56,8 @@ export const createUser = async (isInitialization: boolean = false, user: z.infe
             access: isInitialization ? ["superadmin"] : []
         })
 
+        createLogEvent({what: LOGGER_EVENTS.userCreated, data: JSON.stringify({username: user.username})});
+
         const userName = user.firstName + " " + user.lastName;
 
         sendMail({
@@ -85,6 +89,8 @@ export const createUserPasswordResetRequest = async (userDetails: z.infer<typeof
         await user.save();
 
         const userName = user.firstName + " " + user.lastName;
+
+        createLogEvent({who: user._id as mongoose.Types.ObjectId, what: LOGGER_EVENTS.userPasswordResetRequest });
 
         sendMail({
             to: user.email,
@@ -141,6 +147,8 @@ export const resetUserPassword = async (token: string, details: z.infer<typeof R
         user.resetToken = "";
         user.resetTokenExpire = null;
         await user.save();
+
+        createLogEvent({who: user._id as mongoose.Types.ObjectId, what: LOGGER_EVENTS.userPasswordResetSuccessful });
 
         const userName = user.firstName + " " + user.lastName;
 

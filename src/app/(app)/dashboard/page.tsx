@@ -2,6 +2,7 @@
 import { Button } from "@/app/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/app/components/ui/card";
 import { useSession } from "next-auth/react"
+import Link from "next/link";
 
 export default function Dashboard () {
     const { data } = useSession();
@@ -94,7 +95,7 @@ export default function Dashboard () {
                         <CardDescription>Check system logs</CardDescription>
                     </CardContent>
                     <CardFooter>
-                        <Button type="button">Audit</Button>
+                        <Link href={"/audit"}><Button type="button">Audit</Button></Link>
                     </CardFooter>
                 </Card>
 

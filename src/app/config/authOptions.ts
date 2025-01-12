@@ -6,6 +6,8 @@ import { hash, verify } from "@/app/utils/passwordHasher";
 import userModel from "@/app/models/userModel";
 import Google, { GoogleProfile } from "next-auth/providers/google";
 import generateRandomToken from "../utils/randomToken";
+import createLogEvent, { LOGGER_EVENTS } from "../lib/logger";
+import mongoose from "mongoose";
 
 export const authOptions: NextAuthOptions = {
     providers: [
@@ -96,13 +98,19 @@ export const authOptions: NextAuthOptions = {
                             joined: new Date(),
                             avatar: googleProfile.picture
                         })
+
+                        createLogEvent({what: LOGGER_EVENTS.userCreated, data: JSON.stringify({ googleProfileLinked: true, email: googleProfile.email }) });
                     }
+
+                    createLogEvent({who: foundUser._id ,what: LOGGER_EVENTS.userLogin, data: JSON.stringify({ usedGoogleProfile: true, email: googleProfile.email })});
                     return true;
                 } catch (error) {
                     console.error(error);
                     return false;
                 }
             }
+
+            createLogEvent({who: new mongoose.Types.ObjectId(user.id) ,what: LOGGER_EVENTS.userLogin});
 
             return true
         }

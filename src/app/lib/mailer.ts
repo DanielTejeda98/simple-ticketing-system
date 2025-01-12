@@ -1,4 +1,5 @@
 import nodemailer from "nodemailer";
+import createLogEvent, { LOGGER_EVENTS } from "./logger";
 
 const transporter = nodemailer.createTransport({
     service: "Gmail",
@@ -28,6 +29,9 @@ export const sendMail = (options: mailOptions) => {
             console.error("Error sending email: ", error)
         } else {
             console.log("Email sent: ", info.response)
+            createLogEvent({
+                what: LOGGER_EVENTS.emailSent,
+            })
         }
     })
 }

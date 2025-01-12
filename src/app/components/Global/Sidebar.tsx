@@ -1,7 +1,7 @@
 "use client"
 import { Button } from "../ui/button";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faPlus, faSearch, faGear, faDoorClosed } from '@fortawesome/free-solid-svg-icons'
+import { faPlus, faSearch, faGear, faDoorClosed, faHome } from '@fortawesome/free-solid-svg-icons'
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
 import { signOut, useSession } from "next-auth/react";
@@ -18,6 +18,14 @@ export default function Sidebar () {
                     <Button variant={"outline"}>
                         <FontAwesomeIcon icon={faPlus} />
                     </Button>
+                </div>
+
+                <div className="hidden md:flex flex-col pt-2 text-white">
+                    <Link href="/dashboard">
+                        <Button variant={"ghost"}>
+                            <FontAwesomeIcon icon={faHome} />
+                        </Button>
+                    </Link>
                 </div>
 
                 <div className="hidden md:flex flex-col pt-2 text-white">
