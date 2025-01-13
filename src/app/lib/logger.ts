@@ -17,7 +17,8 @@ export const LOGGER_EVENTS = {
     userPasswordResetSuccessful: "reset password successfully",
     userLogin: "user logged in",
     projectCreated: "created project",
-    projectUpdated: "updated project"
+    projectUpdated: "updated project",
+    projectArchived: "archived project"
 }
 
 const createLogEvent = async (event: LogEvent) => {

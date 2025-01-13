@@ -11,7 +11,7 @@ import { sendMail } from "../lib/mailer";
 import ProjectAssignedEmailTemplate from "../emails/projectAssigned";
 import userModel from "../models/userModel";
 
-export const createProject = async (project: z.infer<typeof NewProjectFormSchema>) => {
+export const createProject = async (project: z.infer<typeof NewProjectFormSchema>, creator: string) => {
     try {
         await dbConnect();
 
@@ -26,12 +26,12 @@ export const createProject = async (project: z.infer<typeof NewProjectFormSchema
             slug = `${slug}-${existingProjects.length + 1}`
         }
     
-        await projectModel.create({
+        const createdProject = await projectModel.create({
             name: project.name,
             slug: slug
         })
 
-        createLogEvent({what: LOGGER_EVENTS.projectCreated, data: JSON.stringify({ })});
+        createLogEvent({who: new mongoose.Types.ObjectId(creator), what: LOGGER_EVENTS.projectCreated, data: JSON.stringify({id: createdProject._id, name: project.name, slug })});
 
         return true;
     } catch (error) {
@@ -69,7 +69,7 @@ export const updateProject = async (project: z.infer<typeof ProjectFormSchema>) 
     }
 }
 
-export const archiveProject = async (projectSlug: string) => {
+export const archiveProject = async (projectSlug: string, archiver: string) => {
     try {
         const retrievedProject = await getProject(projectSlug);
 
@@ -77,7 +77,7 @@ export const archiveProject = async (projectSlug: string) => {
 
         retrievedProject.leadResource = null;
         retrievedProject.archived = true;
-
+        createLogEvent({who: new mongoose.Types.ObjectId(archiver), what: LOGGER_EVENTS.projectArchived, data: JSON.stringify({projectSlug})});
         await retrievedProject.save();
     } catch (error) {
         throw error;
