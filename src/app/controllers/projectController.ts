@@ -69,15 +69,42 @@ export const updateProject = async (project: z.infer<typeof ProjectFormSchema>) 
     }
 }
 
-export const getAllProjects = async (): Promise<Project[]> => {
+export const archiveProject = async (projectSlug: string) => {
+    try {
+        const retrievedProject = await getProject(projectSlug);
+
+        if (!retrievedProject) throw new Error("No project found");
+
+        retrievedProject.leadResource = null;
+        retrievedProject.archived = true;
+
+        await retrievedProject.save();
+    } catch (error) {
+        throw error;
+    }
+}
+
+export const getAllProjects = async (includeArchived?: boolean): Promise<Project[]> => {
     try {
         await dbConnect();
+
+        const findQuery = includeArchived ? {} : {archived: false}
             
-        return await projectModel.find({}).populate({
+        return await projectModel.find(findQuery).populate({
             path: "leadResource",
             model: userModel,
             select: "firstName lastName avatar"
         }).exec()
+    } catch (error) {
+        throw error;
+    }
+}
+
+export const getAllArchivedProjects = async (): Promise<Project[]> => {
+    try {
+        await dbConnect();
+            
+        return await projectModel.find({archived: true})
     } catch (error) {
         throw error;
     }

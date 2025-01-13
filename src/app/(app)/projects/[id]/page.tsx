@@ -1,4 +1,5 @@
 import ProjectForm from "@/app/components/Projects/ProjectForm/ProjectForm";
+import { Alert, AlertDescription, AlertTitle } from "@/app/components/ui/alert";
 import { Badge } from "@/app/components/ui/badge";
 import { Button } from "@/app/components/ui/button";
 import { getProject } from "@/app/controllers/projectController";
@@ -21,9 +22,20 @@ export default async function Project ({ params }: { params: Promise<{ id: strin
                 <p className="text-lg md:text-xl text-transparent">{retrievedProject.description}</p>
             </div>
             <Badge className="w-fit">ID: {(retrievedProject._id as mongoose.Types.ObjectId).toString()}</Badge>
-            <Link href="/projects" className="my-3"><Button>Back to projects</Button></Link>
+            <Link href="/projects" className="my-3 w-fit"><Button>Back to projects</Button></Link>
+            {
+                retrievedProject.archived ? 
+                <Alert>
+                    <AlertTitle>Project Archived</AlertTitle>
+                    <AlertDescription>
+                        This project is archived, thus no changes can be done.
+                    </AlertDescription>
+                </Alert>
+                : null
+            }
+            
             <div>
-                <ProjectForm project={JSON.parse(JSON.stringify(retrievedProject))} resources={JSON.parse(JSON.stringify(retrievedUsers))}/>
+                <ProjectForm project={JSON.parse(JSON.stringify(retrievedProject))} resources={JSON.parse(JSON.stringify(retrievedUsers))} archived={retrievedProject.archived}/>
             </div>
         </main>
     )

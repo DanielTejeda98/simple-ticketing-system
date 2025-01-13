@@ -11,10 +11,10 @@ export default async function NewProjectPage () {
                 <h1 className="text-2xl md:text-4xl text-transparent">New Project</h1>
                 <p className="text-lg md:text-xl text-transparent">Create a new project</p>
             </div>
+            <Link href="/projects" className="my-3 w-fit"><Button type="button">Back to Projects</Button></Link>
 
             <NewProjectForm />
 
-            <Link href="/projects" className="my-3 w-fit"><Button type="button">Back to Projects</Button></Link>
         </main>
     )
 }

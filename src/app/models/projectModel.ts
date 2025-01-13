@@ -9,6 +9,7 @@ export interface Project extends mongoose.Document {
     boughtWorkHours: number,
     totalWorkedHours: number,
     leadResource: mongoose.Types.ObjectId | User,
+    archived: boolean,
     createdBy: mongoose.Schema.Types.ObjectId,
     updatedBy: mongoose.Schema.Types.ObjectId
 }
@@ -41,6 +42,10 @@ const projectSchema = new mongoose.Schema<Project>({
     leadResource: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "Users"
+    },
+    archived: {
+        type: Boolean,
+        default: false
     },
     createdBy: {
         type: mongoose.Schema.Types.ObjectId,

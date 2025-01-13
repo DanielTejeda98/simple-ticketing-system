@@ -16,21 +16,24 @@ import User from "../../Global/User"
 import { useSession } from "next-auth/react"
 import { UpdateProjectAction } from "@/app/server-actions/UpdateProject"
 import { useEffect } from "react"
+import { ArchiveProjectAction } from "@/app/server-actions/ArchiveProject"
 
-export default function ProjectForm ({ project, resources }: { project: Project, resources: UserModel[] }) {
+export default function ProjectForm ({ project, resources, archived }: { project: Project, resources: UserModel[], archived: boolean }) {
     const { data } = useSession();
     const projectForm = useForm<z.infer<typeof ProjectFormSchema>>({
         resolver: zodResolver(ProjectFormSchema)
     })
 
     useEffect(() => {
-        projectForm.setValue("name", project.name);
-        projectForm.setValue("description", project.description);
-        projectForm.setValue("boughtWorkHours", project.boughtWorkHours);
-        projectForm.setValue("leadResource", project.leadResource?.toString());
-        projectForm.setValue("slug", project.slug);
-        projectForm.setValue("updater", data!.user!.id);
-    }, [project, data, projectForm])
+        if (!archived) {
+            projectForm.setValue("name", project.name);
+            projectForm.setValue("description", project.description);
+            projectForm.setValue("boughtWorkHours", project.boughtWorkHours);
+            projectForm.setValue("leadResource", project.leadResource?.toString());
+            projectForm.setValue("slug", project.slug);
+            projectForm.setValue("updater", data!.user!.id);
+        }
+    }, [archived, project, data, projectForm])
 
     async function onSubmit(values: z.infer<typeof ProjectFormSchema>) {
         // When successful, it will redirect the user, on error, it will return an error
@@ -69,7 +72,7 @@ export default function ProjectForm ({ project, resources }: { project: Project,
                             <FormItem className="w-1/2">
                                 <FormLabel>Project name</FormLabel>
                                 <FormControl>
-                                    <Input defaultValue={project.name} {...field}></Input>
+                                    <Input defaultValue={project.name} {...field} disabled={archived} ></Input>
                                 </FormControl>
                                 <FormDescription className={ errors?.name?.message ? 'text-destructive' : ''}>
                                     { errors?.name?.message ? errors.name.message : null}
@@ -85,7 +88,7 @@ export default function ProjectForm ({ project, resources }: { project: Project,
                             <FormItem className="w-1/2">
                                 <FormLabel>Project description</FormLabel>
                                 <FormControl>
-                                    <Input defaultValue={project.description} {...field}></Input>
+                                    <Input defaultValue={project.description} {...field} disabled={archived}></Input>
                                 </FormControl>
                                 <FormDescription className={ errors?.description?.message ? 'text-destructive' : ''}>
                                     { errors?.description?.message ? errors.description.message : null}
@@ -105,7 +108,8 @@ export default function ProjectForm ({ project, resources }: { project: Project,
                                         <Input type="number" defaultValue={project.boughtWorkHours} 
                                          {...field}
                                          onChange={(e) => projectForm.setValue("boughtWorkHours", Number(e.target.value))}
-                                         min={0}></Input>
+                                         min={0}
+                                         disabled={archived}></Input>
                                     </FormControl>
                                     <FormDescription className={ errors?.boughtWorkHours?.message ? 'text-destructive' : ''}>
                                         { errors?.boughtWorkHours?.message ? errors.boughtWorkHours.message : null}
@@ -113,11 +117,14 @@ export default function ProjectForm ({ project, resources }: { project: Project,
                                 </FormItem>
                             )}>
                         </FormField>
-                        <Button className="mt-8 ml-2" type="button" variant={"outline"} onClick={() => projectForm.setValue("boughtWorkHours", (projectForm.getValues("boughtWorkHours") || 0) + 5)}>Add 5 Hours</Button>
-                        <Button className="mt-8 ml-2" type="button" variant={"outline"} onClick={() => projectForm.setValue("boughtWorkHours", (projectForm.getValues("boughtWorkHours") || 0) + 10)}>Add 10 Hours</Button>
+                        <Button className="mt-8 ml-2" type="button" disabled={archived} variant={"outline"} onClick={() => projectForm.setValue("boughtWorkHours", (projectForm.getValues("boughtWorkHours") || 0) + 5)}>Add 5 Hours</Button>
+                        <Button className="mt-8 ml-2" type="button" disabled={archived} variant={"outline"} onClick={() => projectForm.setValue("boughtWorkHours", (projectForm.getValues("boughtWorkHours") || 0) + 10)}>Add 10 Hours</Button>
                     </div>
                     
-                    <Button type="submit" className="w-fit">Save project</Button>
+                    <div className="flex gap-2 mt-8">
+                        <Button type="button" variant={"destructive"} disabled={archived} className="w-fit" onClick={() => ArchiveProjectAction(project.slug)}>Archive project</Button>
+                        <Button type="submit" disabled={archived} className="w-fit">Save project</Button>
+                    </div>
                 </div>
                 
                 <div className="flex flex-col w-1/3 gap-2">
@@ -128,7 +135,10 @@ export default function ProjectForm ({ project, resources }: { project: Project,
                         <FormItem>
                             <FormLabel>Assigned Resource Lead</FormLabel>
                             <FormControl>
-                                <Select defaultValue={project.leadResource?.toString()} {...field} onValueChange={(e) => projectForm.setValue("leadResource", e)}>
+                                <Select defaultValue={project.leadResource?.toString()}
+                                        {...field} 
+                                        onValueChange={(e) => projectForm.setValue("leadResource", e)}
+                                        disabled={archived}>
                                     <SelectTrigger className="w-full">
                                         <SelectValue placeholder="Unassigned" />
                                     </SelectTrigger>

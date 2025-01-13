@@ -15,7 +15,7 @@ export async function CreateProjectAction(project: z.infer<typeof NewProjectForm
             }
         }
 
-        const res = createProject(project);
+        const res = await createProject(project);
 
         if (!res) throw new Error("Unable to create project");
 
