@@ -1,12 +1,22 @@
 "use client"
+import ShowWhen from "@/app/components/Global/Show";
 import { Button } from "@/app/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/app/components/ui/card";
+import { actions, subjects } from "@/app/lib/appAbility";
+import { AbilityContext } from "@/app/providers/AccessProvider";
 import { useSession } from "next-auth/react"
 import Link from "next/link";
+import { useContext } from "react";
 
 export default function Dashboard () {
     const { data } = useSession();
     const user = data!.user!;
+    const ability = useContext(AbilityContext)
+
+    const checkAbility = (any: typeof actions[number], singular: typeof actions[number], resource: typeof subjects[number]) => {
+        return ability.can(any, resource) || ability.can(singular, resource);
+    }
+
     return (
         <main className="flex flex-col w-full">
             <div className="bg-gradient-to-r from-sky-500 to-indigo-500 bg-clip-text px-4 md:px-8 mt-6 md:mt-[10vh] max-h-fit">
@@ -15,101 +25,115 @@ export default function Dashboard () {
             </div>
 
             <div className="w-full grid grid-cols-1 md:grid-cols-3 gap-3 px-4 md:px-8 pt-8">
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Create new ticket</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <CardDescription>Create a new ticket for an issue or a request</CardDescription>
-                    </CardContent>
-                    <CardFooter>
-                        <Button type="button">New Ticket</Button>
-                    </CardFooter>
-                </Card>
+                <ShowWhen condition={checkAbility("create-any", "create", "tickets")}>
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Create new ticket</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <CardDescription>Create a new ticket for an issue or a request</CardDescription>
+                        </CardContent>
+                        <CardFooter>
+                            <Button type="button">New Ticket</Button>
+                        </CardFooter>
+                    </Card>
+                </ShowWhen>
 
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Work on ticket</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <CardDescription>Time work on tickets assigned to you</CardDescription>
-                    </CardContent>
-                    <CardFooter>
-                        <Button type="button">Work on Ticket</Button>
-                    </CardFooter>
-                </Card>
+                <ShowWhen condition={checkAbility("update-any", "update", "tickets")}>
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Work on ticket</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <CardDescription>Time work on tickets assigned to you</CardDescription>
+                        </CardContent>
+                        <CardFooter>
+                            <Button type="button">Work on Ticket</Button>
+                        </CardFooter>
+                    </Card>
+                </ShowWhen>
 
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Check existing ticket</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <CardDescription>Find information on an existing ticket</CardDescription>
-                    </CardContent>
-                    <CardFooter>
-                        <Button type="button">Check Ticket</Button>
-                    </CardFooter>
-                </Card>
+                <ShowWhen condition={checkAbility("read-any", "read", "tickets")}>
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Check existing ticket</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <CardDescription>Find information on an existing ticket</CardDescription>
+                        </CardContent>
+                        <CardFooter>
+                            <Button type="button">Check Ticket</Button>
+                        </CardFooter>
+                    </Card>
+                </ShowWhen>
 
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Project Management</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <CardDescription>Manage projects and the users assigned to projects</CardDescription>
-                    </CardContent>
-                    <CardFooter>
-                        <Link href={"/projects"}><Button type="button">Project Management</Button></Link>
-                    </CardFooter>
-                </Card>
+                <ShowWhen condition={checkAbility("read-any", "read", "projects")}>
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Project Management</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <CardDescription>Manage projects and the users assigned to projects</CardDescription>
+                        </CardContent>
+                        <CardFooter>
+                            <Link href={"/projects"}><Button type="button">Project Management</Button></Link>
+                        </CardFooter>
+                    </Card>
+                </ShowWhen>
 
-                <Card>
-                    <CardHeader>
-                        <CardTitle>User Management</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <CardDescription>Manage users and their accounts</CardDescription>
-                    </CardContent>
-                    <CardFooter>
-                        <Button type="button">User Management</Button>
-                    </CardFooter>
-                </Card>
+                <ShowWhen condition={checkAbility("read-any", "read", "users")}>
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>User Management</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <CardDescription>Manage users and their accounts</CardDescription>
+                        </CardContent>
+                        <CardFooter>
+                            <Button type="button">User Management</Button>
+                        </CardFooter>
+                    </Card>
+                </ShowWhen>
 
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Access Management</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <CardDescription>Manage roles in the system and assign roles to users</CardDescription>
-                    </CardContent>
-                    <CardFooter>
-                        <Button type="button">Access Management</Button>
-                    </CardFooter>
-                </Card>
-
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Audit Logs</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <CardDescription>Check system logs</CardDescription>
-                    </CardContent>
-                    <CardFooter>
-                        <Link href={"/audit"}><Button type="button">Audit</Button></Link>
-                    </CardFooter>
-                </Card>
-
-                <Card>
-                    <CardHeader>
-                        <CardTitle>System Settings</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <CardDescription>Manage system settings</CardDescription>
-                    </CardContent>
-                    <CardFooter>
-                        <Button type="button">System Settings</Button>
-                    </CardFooter>
-                </Card>
+                <ShowWhen condition={checkAbility("read-any", "read", "permissions")}>
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Access Management</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <CardDescription>Manage roles in the system and assign roles to users</CardDescription>
+                        </CardContent>
+                        <CardFooter>
+                            <Link href={"/access"}><Button type="button">Access Management</Button></Link>
+                        </CardFooter>
+                    </Card>
+                </ShowWhen>
+                <ShowWhen condition={checkAbility("read-any", "read", "audit")}>
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Audit Logs</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <CardDescription>Check system logs</CardDescription>
+                        </CardContent>
+                        <CardFooter>
+                            <Link href={"/audit"}><Button type="button">Audit</Button></Link>
+                        </CardFooter>
+                    </Card>
+                </ShowWhen>
+                <ShowWhen condition={checkAbility("read-any", "read", "system")}>
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>System Settings</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <CardDescription>Manage system settings</CardDescription>
+                        </CardContent>
+                        <CardFooter>
+                            <Button type="button">System Settings</Button>
+                        </CardFooter>
+                    </Card>
+                </ShowWhen>
             </div>
 
             <div className="w-full px-8 pt-8">

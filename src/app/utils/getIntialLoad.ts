@@ -1,7 +1,8 @@
 import { getServerSession } from "next-auth"
 import { authOptions } from "../config/authOptions"
-import { isThereUsers } from "../controllers/userController"
+import { getUserPermissions, isThereUsers } from "../controllers/userController"
 import { redirect } from "next/navigation"
+import { createAbility } from "../lib/appAbility"
 
 export interface getIntitialLoadOptions {
     skipCheckInitialization?: boolean
@@ -22,9 +23,15 @@ export const getInitialLoad = async (
         redirect('/');
     }
 
+    const session = await getServerSession(authOptions)
+    let permissions = null;
+    if (session && session.user) {
+        permissions = await getUserPermissions(session.user.id);
+    }
     return {
         props: {
-            session: await getServerSession(authOptions)
+            session: await getServerSession(authOptions),
+            permissions: permissions
         }
     }
 }

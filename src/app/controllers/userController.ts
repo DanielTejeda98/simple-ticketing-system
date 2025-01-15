@@ -12,6 +12,7 @@ import PasswordResetSuccessfulEmailTemplate from "../emails/passwordResetSuccess
 import WelcomeEmailTemplate from "../emails/welcome";
 import createLogEvent, { LOGGER_EVENTS } from "../lib/logger";
 import mongoose from "mongoose";
+import permissionsModel from "../models/permissionsModel";
 
 export const isThereUsers = async () => {
     await dbConnect();
@@ -53,7 +54,7 @@ export const createUser = async (isInitialization: boolean = false, user: z.infe
             lastName: user.lastName,
             title: user.title,
             joined: new Date(),
-            access: isInitialization ? ["superadmin"] : []
+            access: isInitialization ? "superadmin" : []
         })
 
         createLogEvent({what: LOGGER_EVENTS.userCreated, data: JSON.stringify({username: user.username})});
@@ -168,7 +169,7 @@ export const getAllUsers = async () => {
     await dbConnect();
 
     try { 
-        const users = await userModel.find({});
+        const users = await userModel.find({}).select("email firstName lastName avatar").exec();
         return users;
     } catch (error) {
         console.log(error);
@@ -198,6 +199,22 @@ export const getUsers = async (id: string[]): Promise<User[]|null> => {
         return users;
     } catch (error) {
         console.log(error);
+        throw error;
+    }
+}
+
+export const getUserPermissions = async (id: string) => {
+    try {
+        await dbConnect();
+
+        const user = await userModel.findOne({_id: new mongoose.Types.ObjectId(id)})
+        .populate({
+            path: "access",
+            model: permissionsModel
+        }).exec();
+
+        return JSON.parse(user.access.permissions);
+    } catch (error) {
         throw error;
     }
 }

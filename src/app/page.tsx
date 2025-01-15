@@ -2,6 +2,7 @@ import { getInitialLoad } from "./utils/getIntialLoad";
 import AuthProvider from "./providers/AuthProvier";
 import LoginForm from "./components/Accounts/Login/LoginForm";
 import { redirect } from "next/navigation";
+import AccessProvider from "./providers/AccessProvider";
 
 export default async function Home() {
 
@@ -13,15 +14,17 @@ export default async function Home() {
 
   return (
     <AuthProvider session={props.session}>
-      <main className="flex flex-col justify-center items-center bg-blue-600 w-full h-dvh">
-        <div className="flex flex-col gap-3 min-w-[25%] px-3">
-          <div className="flex flex-col text-white">
-            <h1 className="text-2xl font-bold">Simple Ticketing System</h1>
-            <p>By Daniel Tejeda</p>
+      <AccessProvider permissions={props.permissions}>
+        <main className="flex flex-col justify-center items-center bg-blue-600 w-full h-dvh">
+          <div className="flex flex-col gap-3 min-w-[25%] px-3">
+            <div className="flex flex-col text-white">
+              <h1 className="text-2xl font-bold">Simple Ticketing System</h1>
+              <p>By Daniel Tejeda</p>
+            </div>
+            <LoginForm />
           </div>
-          <LoginForm />
-        </div>
-      </main>
+        </main>
+      </AccessProvider>
     </AuthProvider>
   );
 }

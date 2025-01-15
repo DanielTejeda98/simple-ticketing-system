@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import { Permissions } from "./permissionsModel";
 
 export interface User extends mongoose.Document {
     username: string;
@@ -9,7 +10,7 @@ export interface User extends mongoose.Document {
     title: string;
     joined: Date;
     disabled: boolean;
-    access: string[];
+    access: mongoose.Schema.Types.ObjectId | Permissions;
     avatar: string;
     resetToken: string;
     resetTokenExpire: Date;
@@ -51,7 +52,8 @@ const UserSchema = new mongoose.Schema<User>({
         default: new Date()
     },
     access: {
-        type: [String]
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Permissions"
     },
     avatar: {
         type: String,
