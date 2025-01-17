@@ -2,7 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
-import NewRoleFormSchema from "./NewRoleFormSchema"
+import RoleFormSchema from "./RoleFormSchema"
 import { z } from "zod"
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel } from "../../ui/form"
 import { Input } from "../../ui/input"
@@ -11,43 +11,55 @@ import { Alert, AlertDescription, AlertTitle } from "../../ui/alert"
 import { useSession } from "next-auth/react"
 import { useEffect } from "react"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../../ui/table"
-import { actions, subjects } from "@/app/lib/appAbility"
+import { actions, AppAbility, subjects } from "@/app/lib/appAbility"
 import { toSentenceCase } from "@/app/lib/utils"
 import { Switch } from "../../ui/switch"
-import { NewPermission } from "@/app/server-actions/NewPermission"
+import { DeletePermission, NewPermission, UpdatePermission } from "@/app/server-actions/PermissionActions"
+import { RawRuleOf } from "@casl/ability"
 
-export default function NewRoleForm () {
+export default function RoleForm ({id, name, permissions}: {id?: string, name?: string, permissions?: RawRuleOf<AppAbility>[]}) {
     const { data } = useSession();
     const user = data!.user.id;
-    const newRoleForm = useForm<z.infer<typeof NewRoleFormSchema>>({
-        resolver: async (data, context, options) => {
-            // you can debug your validation schema here
-            console.log("formData", data)
-            console.log(
-              "validation result",
-              await zodResolver(NewRoleFormSchema)(data, context, options)
-            )
-            return zodResolver(NewRoleFormSchema)(data, context, options)
-          }
+    const roleForm = useForm<z.infer<typeof RoleFormSchema>>({
+        resolver: zodResolver(RoleFormSchema)
     })
 
     useEffect(() => {
-        newRoleForm.setValue("creator", user);
-        // Set form defaults
+        if (!permissions) {
+            roleForm.setValue("creator", user);
+            // Set form defaults
+            subjects.forEach(subject => {
+                actions.forEach(action => {
+                    roleForm.setValue(`${subject}.${action}`, false);
+                })
+            })
+            return;
+        }
+
+        roleForm.setValue("updator", user);
+        roleForm.setValue("name", name || "");
+        
+        // Initiate all the values to false
         subjects.forEach(subject => {
             actions.forEach(action => {
-                newRoleForm.setValue(`${subject}.${action}`, false);
+                roleForm.setValue(`${subject}.${action}`, false);
             })
         })
 
-    }, [newRoleForm, user])
+        // Set the enabled permissions
+        permissions.forEach(permission => {
+            roleForm.setValue(`${permission.subject as typeof subjects[number]}.${permission.action as typeof actions[number]}`, true);
+        })
+        return;
 
-    async function onSubmit(values: z.infer<typeof NewRoleFormSchema>) {
+    }, [roleForm, user,permissions, name])
+
+    async function onSubmit(values: z.infer<typeof RoleFormSchema>) {
         // When successful, it will redirect the user, on error, it will return an error
-        const error = await NewPermission(values) as Error;
+        const error = (permissions && id ? await UpdatePermission(id, values) : await NewPermission(values)) as Error;
 
         if (error) {
-            newRoleForm.setError("root", {
+            roleForm.setError("root", {
                 message: typeof error === "object" ? error.message : error
             })
 
@@ -55,11 +67,11 @@ export default function NewRoleForm () {
         }
     }
 
-    const errors = newRoleForm.formState.errors;
+    const errors = roleForm.formState.errors;
 
     return (
-        <Form {...newRoleForm}>
-            <form onSubmit={newRoleForm.handleSubmit(onSubmit)} onInvalid={e => console.log(e)} className="space-y-8">
+        <Form {...roleForm}>
+            <form onSubmit={roleForm.handleSubmit(onSubmit)} onInvalid={e => console.log(e)} className="space-y-8">
                 { errors?.root?.message 
                 ? (
                     <Alert variant="destructive">
@@ -71,7 +83,7 @@ export default function NewRoleForm () {
                 )
                 : null}
                 <FormField 
-                    control={newRoleForm.control}
+                    control={roleForm.control}
                     name="name"
                     render={({ field }) => (
                         <FormItem className="w-1/2">
@@ -102,13 +114,13 @@ export default function NewRoleForm () {
                                     (
                                         <TableHead key={`${subject}-${action}`}>
                                             <FormField 
-                                                control={newRoleForm.control}
+                                                control={roleForm.control}
                                                 name={`${subject}.${action}`}
                                                 render={({ field }) => (
                                                     <FormItem>
                                                         <FormControl>
                                                             <Switch checked={typeof field.value === "boolean" && field.value}
-                                                            onCheckedChange={(e) => newRoleForm.setValue(`${subject}.${action}`, e)} />
+                                                            onCheckedChange={(e) => roleForm.setValue(`${subject}.${action}`, e)} />
                                                         </FormControl>
                                                     </FormItem>
                                                 )}>
@@ -121,8 +133,10 @@ export default function NewRoleForm () {
                         })}
                     </TableBody>
                 </Table>
-
-                <Button type="submit">Create role</Button>
+                <div className="flex gap-2">
+                    { id ? <Button type="button" variant={"destructive"} className="w-fit" onClick={() => DeletePermission(id)}>Remove permission</Button> : null}
+                    <Button type="submit">{permissions ? "Save" : "Create role"}</Button>
+                </div>
             </form>
         </Form>
     )

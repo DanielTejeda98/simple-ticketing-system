@@ -19,7 +19,9 @@ export const LOGGER_EVENTS = {
     projectCreated: "created project",
     projectUpdated: "updated project",
     projectArchived: "archived project",
-    permissionCreated: "created permission"
+    permissionCreated: "created permission",
+    permissionUpdated: "updated permission",
+    permissionDeleted: "deleted permission"
 }
 
 const createLogEvent = async (event: LogEvent) => {

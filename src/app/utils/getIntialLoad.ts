@@ -2,7 +2,6 @@ import { getServerSession } from "next-auth"
 import { authOptions } from "../config/authOptions"
 import { getUserPermissions, isThereUsers } from "../controllers/userController"
 import { redirect } from "next/navigation"
-import { createAbility } from "../lib/appAbility"
 
 export interface getIntitialLoadOptions {
     skipCheckInitialization?: boolean

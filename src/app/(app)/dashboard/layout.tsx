@@ -9,7 +9,6 @@ export default async function DashboardLayout ({
     children: React.ReactNode;
   }>) {
     const { props } = await getInitialLoad({});
-
     return (
         <AuthProvider session={props.session}>
           <AccessProvider permissions={props.permissions}>

@@ -27,12 +27,13 @@ const generatePermissionsObject = () => {
     return subjectObj;
 }
 
-const NewRoleFormSchema = z.object({
-    creator: z.string(),
+const RoleFormSchema = z.object({
+    creator: z.string().optional(),
+    updator: z.string().optional(),
     name: z.string().min(1, {
         message: "Role name must contain at least 1 character"
     }),
     ...generatePermissionsObject()
 })
 
-export default NewRoleFormSchema;
+export default RoleFormSchema;

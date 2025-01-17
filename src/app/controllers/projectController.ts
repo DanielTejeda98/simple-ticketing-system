@@ -10,10 +10,15 @@ import { getUsers } from "./userController";
 import { sendMail } from "../lib/mailer";
 import ProjectAssignedEmailTemplate from "../emails/projectAssigned";
 import userModel from "../models/userModel";
+import { checkAbilityServer } from "../utils/checkAbilityServer";
 
 export const createProject = async (project: z.infer<typeof NewProjectFormSchema>, creator: string) => {
     try {
         await dbConnect();
+
+        if(!checkAbilityServer(creator, "create-any", "create", "projects")) {
+            throw new Error("User does not have permissions for this action!");
+        }
 
         let slug = slugify(project.name);
             
@@ -43,6 +48,10 @@ export const updateProject = async (project: z.infer<typeof ProjectFormSchema>) 
     try {
         await dbConnect();
 
+        if(!checkAbilityServer(project.updater, "update-any", "update", "projects")) {
+            throw new Error("User does not have permissions for this action!");
+        }
+
         const retrievedProject = await getProject(project.slug)
         const notifyResourceLead = project.leadResource && retrievedProject.leadResource?.toString() !== project.leadResource 
         && project.leadResource !== project.updater;
@@ -70,6 +79,11 @@ export const updateProject = async (project: z.infer<typeof ProjectFormSchema>) 
 }
 
 export const archiveProject = async (projectSlug: string, archiver: string) => {
+
+    if(!checkAbilityServer(archiver, "delete-any", "delete", "projects")) {
+        throw new Error("User does not have permissions for this action!");
+    }
+
     try {
         const retrievedProject = await getProject(projectSlug);
 
@@ -121,7 +135,7 @@ export const getProject = async (projectSlug: string) => {
 }
 
 const sendResourceLeadChangeNotification = async (resourceLead: string, project: z.infer<typeof ProjectFormSchema>, oldResourceLead: string|undefined) => {
-    console.log("oldresourcelead", oldResourceLead)
+
     try {
         const retrievedUsers = await getUsers([resourceLead, oldResourceLead || "", project.updater]);
         if (retrievedUsers) {

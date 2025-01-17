@@ -2,8 +2,8 @@
 import ShowWhen from "@/app/components/Global/Show";
 import { Button } from "@/app/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/app/components/ui/card";
-import { actions, subjects } from "@/app/lib/appAbility";
 import { AbilityContext } from "@/app/providers/AccessProvider";
+import { checkAbility } from "@/app/utils/checkAbility";
 import { useSession } from "next-auth/react"
 import Link from "next/link";
 import { useContext } from "react";
@@ -13,10 +13,6 @@ export default function Dashboard () {
     const user = data!.user!;
     const ability = useContext(AbilityContext)
 
-    const checkAbility = (any: typeof actions[number], singular: typeof actions[number], resource: typeof subjects[number]) => {
-        return ability.can(any, resource) || ability.can(singular, resource);
-    }
-
     return (
         <main className="flex flex-col w-full">
             <div className="bg-gradient-to-r from-sky-500 to-indigo-500 bg-clip-text px-4 md:px-8 mt-6 md:mt-[10vh] max-h-fit">
@@ -25,7 +21,7 @@ export default function Dashboard () {
             </div>
 
             <div className="w-full grid grid-cols-1 md:grid-cols-3 gap-3 px-4 md:px-8 pt-8">
-                <ShowWhen condition={checkAbility("create-any", "create", "tickets")}>
+                <ShowWhen condition={checkAbility(ability, "create-any", "create", "tickets")}>
                     <Card>
                         <CardHeader>
                             <CardTitle>Create new ticket</CardTitle>
@@ -39,7 +35,7 @@ export default function Dashboard () {
                     </Card>
                 </ShowWhen>
 
-                <ShowWhen condition={checkAbility("update-any", "update", "tickets")}>
+                <ShowWhen condition={checkAbility(ability, "update-any", "update", "tickets")}>
                     <Card>
                         <CardHeader>
                             <CardTitle>Work on ticket</CardTitle>
@@ -53,7 +49,7 @@ export default function Dashboard () {
                     </Card>
                 </ShowWhen>
 
-                <ShowWhen condition={checkAbility("read-any", "read", "tickets")}>
+                <ShowWhen condition={checkAbility(ability, "read-any", "read", "tickets")}>
                     <Card>
                         <CardHeader>
                             <CardTitle>Check existing ticket</CardTitle>
@@ -67,7 +63,7 @@ export default function Dashboard () {
                     </Card>
                 </ShowWhen>
 
-                <ShowWhen condition={checkAbility("read-any", "read", "projects")}>
+                <ShowWhen condition={checkAbility(ability, "read-any", "read", "projects")}>
                     <Card>
                         <CardHeader>
                             <CardTitle>Project Management</CardTitle>
@@ -81,7 +77,7 @@ export default function Dashboard () {
                     </Card>
                 </ShowWhen>
 
-                <ShowWhen condition={checkAbility("read-any", "read", "users")}>
+                <ShowWhen condition={checkAbility(ability, "read-any", "read", "users")}>
                     <Card>
                         <CardHeader>
                             <CardTitle>User Management</CardTitle>
@@ -95,7 +91,7 @@ export default function Dashboard () {
                     </Card>
                 </ShowWhen>
 
-                <ShowWhen condition={checkAbility("read-any", "read", "permissions")}>
+                <ShowWhen condition={checkAbility(ability, "read-any", "read", "permissions")}>
                     <Card>
                         <CardHeader>
                             <CardTitle>Access Management</CardTitle>
@@ -108,7 +104,7 @@ export default function Dashboard () {
                         </CardFooter>
                     </Card>
                 </ShowWhen>
-                <ShowWhen condition={checkAbility("read-any", "read", "audit")}>
+                <ShowWhen condition={checkAbility(ability, "read-any", "read", "audit")}>
                     <Card>
                         <CardHeader>
                             <CardTitle>Audit Logs</CardTitle>
@@ -121,7 +117,7 @@ export default function Dashboard () {
                         </CardFooter>
                     </Card>
                 </ShowWhen>
-                <ShowWhen condition={checkAbility("read-any", "read", "system")}>
+                <ShowWhen condition={checkAbility(ability, "read-any", "read", "system")}>
                     <Card>
                         <CardHeader>
                             <CardTitle>System Settings</CardTitle>

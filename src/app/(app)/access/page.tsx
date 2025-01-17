@@ -1,10 +1,9 @@
-import User from "@/app/components/Global/User";
 import { Button } from "@/app/components/ui/button";
-import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from "@/app/components/ui/table";
+import { Table, TableBody, TableCaption, TableHead, TableHeader, TableRow } from "@/app/components/ui/table";
 import { getAllPermissions } from "@/app/controllers/permissionsController";
 import { Permissions } from "@/app/models/permissionsModel";
 import Link from "next/link";
-import { User as UserModel } from "@/app/models/userModel";
+import AccessRow from "@/app/components/Access/AccessRow";
 
 export default async function AccessPage () {
 
@@ -30,19 +29,7 @@ export default async function AccessPage () {
                 </TableHeader>
                 <TableBody>
                     {
-                        roles.map(role => (
-                            <TableRow key={role._id!.toString()} >
-                                <TableCell>
-                                    { role.name }
-                                </TableCell>
-                                <TableCell>
-                                    { role.assignedUsersCount || 0 }
-                                </TableCell>
-                                <TableCell>
-                                    <User user={(role.updatedBy || role.createdBy) as UserModel} />
-                                </TableCell>
-                            </TableRow>
-                        ))
+                        roles.map((role: Permissions) => (<AccessRow key={role._id!.toString()} role={JSON.parse(JSON.stringify(role))}/>))
                     }
                 </TableBody>
             </Table>
