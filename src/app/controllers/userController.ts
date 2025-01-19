@@ -13,6 +13,9 @@ import WelcomeEmailTemplate from "../emails/welcome";
 import createLogEvent, { LOGGER_EVENTS } from "../lib/logger";
 import mongoose from "mongoose";
 import permissionsModel from "../models/permissionsModel";
+import EditUserFormSchema from "../components/Users/EditUserForm/EditUserFormSchema";
+import PasswordResetByAdminEmailTemplate from "../emails/passwordChanged";
+import { checkAbilityServer } from "../utils/checkAbilityServer";
 
 export const isThereUsers = async () => {
     await dbConnect();
@@ -66,6 +69,68 @@ export const createUser = async (isInitialization: boolean = false, user: z.infe
             subject: "Welcome | Simple Ticketing System",
             html: WelcomeEmailTemplate(userName)
         })
+
+        return true;
+    } catch (error) {
+        throw error;
+    }
+}
+
+export const updateUser = async (user: z.infer<typeof EditUserFormSchema>, fromUserManagement: boolean) => {
+    let notifyOfPasswordChange = false;
+    try {
+        await dbConnect();
+
+        if(!checkAbilityServer(user.updater, "update-any", "update", "projects")) {
+            throw new Error("User does not have permissions for this action!");
+        }
+
+        // See if any users already exist with that username or password
+        const findUserAndUserAssociatedEmail = await findAllUsersByEmailOrId(user.id, user.email);
+
+        // If we get more than one result, we know that the email might be associated to another user
+        if (findUserAndUserAssociatedEmail.length > 1) {
+            throw new Error("Email assigned to another user");
+        }
+        const foundUser = findUserAndUserAssociatedEmail.at(0);
+    
+        if (!foundUser) {
+            throw new Error("No user found");
+        }
+
+        foundUser.email = user.email;
+        foundUser.firstName = user.firstName;
+        foundUser.lastName = user.lastName;
+        foundUser.title = user.title || "";
+        foundUser.avatar = user.avatar || "";
+        
+        // These attributes should only be changed via user management
+        if (fromUserManagement) {
+            foundUser.access = new mongoose.Types.ObjectId(user.access);
+        }
+
+        if (user.newPassword) {
+            foundUser.password = await hash(user.newPassword);
+            // Notify user of the new password
+            notifyOfPasswordChange = true;
+        }
+
+        await foundUser.save();
+
+        createLogEvent({
+            who: new mongoose.Types.ObjectId(user.updater), 
+            what: LOGGER_EVENTS.userUpdated, 
+            toWhom: new mongoose.Types.ObjectId(user.id)
+        });
+
+        const userName = user.firstName + " " + user.lastName;
+        if (notifyOfPasswordChange && user.newPassword) {
+            sendMail({
+                to: user.email,
+                subject: "Password Changed | Simple Ticketing System",
+                html: fromUserManagement ? PasswordResetByAdminEmailTemplate(userName, user.newPassword) : PasswordResetSuccessfulEmailTemplate(userName)
+            })
+        }
 
         return true;
     } catch (error) {
@@ -169,7 +234,13 @@ export const getAllUsers = async () => {
     await dbConnect();
 
     try { 
-        const users = await userModel.find({}).select("email firstName lastName avatar").exec();
+        const users = await userModel.find({}).select("email firstName lastName avatar access")
+        .populate({
+            path: "access",
+            model: permissionsModel,
+            select: "name"
+        })
+        .exec();
         return users;
     } catch (error) {
         console.log(error);
@@ -181,7 +252,12 @@ export const getUser = async (id: string): Promise<User|null> => {
     await dbConnect();
 
     try { 
-        const user = await userModel.findOne({_id: new mongoose.Types.ObjectId(id)}).select("email firstName lastName avatar").exec();
+        const user = await userModel.findOne({_id: new mongoose.Types.ObjectId(id)}).select("email firstName lastName avatar access")
+        .populate({
+            path: "access",
+            model: permissionsModel,
+            select: "name"
+        }).exec();
         return user;
     } catch (error) {
         console.log(error);
@@ -219,6 +295,18 @@ export const getUserPermissions = async (id: string) => {
     }
 }
 
+export const getUserAvatar = async (id: string) => {
+    try {
+        await dbConnect();
+
+        const user = await userModel.findOne({_id: new mongoose.Types.ObjectId(id)}, "avatar");
+
+        return user.avatar;
+    } catch (error) {
+        throw error;
+    }
+}
+
 const findUserByEmailOrUsername = async (providedIdentification: string): Promise<User|null> => {
     return await userModel.findOne({$or: [
         { username: {
@@ -226,6 +314,15 @@ const findUserByEmailOrUsername = async (providedIdentification: string): Promis
         } },
         { email: {
             $regex: new RegExp(providedIdentification, "i")
+        } }
+    ]})
+}
+
+const findAllUsersByEmailOrId = async (id: string, email: string): Promise<User[]> => {
+    return await userModel.find({$or: [
+        { _id: new mongoose.Types.ObjectId(id) },
+        { email: {
+            $regex: new RegExp(email, "i")
         } }
     ]})
 }

@@ -13,7 +13,7 @@ export default async function DashboardLayout ({
         <AuthProvider session={props.session}>
           <AccessProvider permissions={props.permissions}>
             <div className="flex flex-col md:flex-row">
-                <Sidebar />
+                <Sidebar userAvatar={props.userAvatar} />
                 { children }
             </div>
           </AccessProvider>

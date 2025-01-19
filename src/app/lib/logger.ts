@@ -13,6 +13,7 @@ export type LogEvent = {
 export const LOGGER_EVENTS = {
     emailSent: "Email sent",
     userCreated: "User was created",
+    userUpdated: "user was updated",
     userPasswordResetRequest: "User requested password reset",
     userPasswordResetSuccessful: "reset password successfully",
     userLogin: "user logged in",

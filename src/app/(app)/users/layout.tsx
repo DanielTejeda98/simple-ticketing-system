@@ -4,14 +4,14 @@ import AuthProvider from "@/app/providers/AuthProvier";
 import { checkRouteAccess } from "@/app/utils/checkAbility";
 import { getInitialLoad } from "@/app/utils/getIntialLoad";
 
-export default async function ProjectsLayout ({
+export default async function UsersLayout ({
     children,
   }: Readonly<{
     children: React.ReactNode;
   }>) {
     const { props } = await getInitialLoad({});
 
-    checkRouteAccess(props.permissions, "projects");
+    checkRouteAccess(props.permissions, "users");
 
     return (
         <AuthProvider session={props.session}>

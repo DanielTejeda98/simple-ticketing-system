@@ -14,3 +14,32 @@ export function checkRouteAccess (permissions: RawRuleOf<AppAbility>[], resource
     return;
 }
 
+export function checkCreateAccess (permissions: RawRuleOf<AppAbility>[], resource: typeof subjects[number]) {
+  const ability = createAbility(permissions);
+  if(!checkAbility(ability, "create-any", "create", resource)) {
+    handleUnathorized();
+  }
+  return;
+}
+
+export function checkCreateAccessWithAbility (ability: AppAbility, resource: typeof subjects[number]) {
+  if(!checkAbility(ability, "create-any", "create", resource)) {
+    handleUnathorized();
+  }
+  return;
+}
+
+export function checkUpdateAccess (permissions: RawRuleOf<AppAbility>[], resource: typeof subjects[number]) {
+  const ability = createAbility(permissions);
+  if(!checkAbility(ability, "update-any", "update", resource)) {
+    handleUnathorized();
+  }
+  return;
+}
+
+export function checkUpdateAccessWithAbility (ability: AppAbility, resource: typeof subjects[number]) {
+  if(!checkAbility(ability, "update-any", "update", resource)) {
+    handleUnathorized();
+  }
+  return;
+}

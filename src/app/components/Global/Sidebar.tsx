@@ -2,12 +2,12 @@
 import { Button } from "../ui/button";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faPlus, faSearch, faGear, faDoorClosed, faHome } from '@fortawesome/free-solid-svg-icons'
-import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage, MemoAvatarImage } from "../ui/avatar";
 import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
 import { signOut, useSession } from "next-auth/react";
 import Link from "next/link";
 
-export default function Sidebar () {
+export default function Sidebar ({userAvatar}: {userAvatar: string}) {
     const { data } = useSession();
 
     if (!data) return null;
@@ -45,14 +45,14 @@ export default function Sidebar () {
                 <Popover>
                     <PopoverTrigger>
                         <Avatar>
-                            <AvatarImage src={user.avatar || ""}></AvatarImage>
+                            <AvatarImage src={userAvatar || ""}></AvatarImage>
                             <AvatarFallback>{user.firstName.substring(0,1)}{user.lastName.substring(0,1)}</AvatarFallback>
                         </Avatar>
                     </PopoverTrigger>
                     <PopoverContent className="ml-2">
                         <div className="flex gap-2 items-center border-b">
                             <Avatar>
-                                <AvatarImage></AvatarImage>
+                                <MemoAvatarImage src={userAvatar || ""}></MemoAvatarImage>
                                 <AvatarFallback>{user.firstName.substring(0,1)}{user.lastName.substring(0,1)}</AvatarFallback>
                             </Avatar>
 

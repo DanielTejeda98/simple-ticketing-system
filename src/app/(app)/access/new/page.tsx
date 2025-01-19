@@ -1,9 +1,16 @@
+"use client"
 import RoleForm from "@/app/components/Access/RoleForm/RoleForm";
 import { Button } from "@/app/components/ui/button";
+import { AppAbility } from "@/app/lib/appAbility";
+import { AbilityContext } from "@/app/providers/AccessProvider";
+import { checkCreateAccessWithAbility } from "@/app/utils/checkAbility";
 import Link from "next/link";
+import { useContext } from "react";
 
-export default async function NewRolePage () {
-    
+export default function NewRolePage () {
+
+    const ability = useContext(AbilityContext) as AppAbility;
+    checkCreateAccessWithAbility(ability, "permissions");
 
     return (
         <main className="flex flex-col w-full px-4 md:px-8 mt-6 md:mt-[10vh]">

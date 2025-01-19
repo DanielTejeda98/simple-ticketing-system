@@ -1,6 +1,6 @@
 import { getServerSession } from "next-auth"
 import { authOptions } from "../config/authOptions"
-import { getUserPermissions, isThereUsers } from "../controllers/userController"
+import { getUserAvatar, getUserPermissions, isThereUsers } from "../controllers/userController"
 import { redirect } from "next/navigation"
 
 export interface getIntitialLoadOptions {
@@ -24,13 +24,16 @@ export const getInitialLoad = async (
 
     const session = await getServerSession(authOptions)
     let permissions = null;
+    let userAvatar = null;
     if (session && session.user) {
         permissions = await getUserPermissions(session.user.id);
+        userAvatar = await getUserAvatar(session.user.id);
     }
     return {
         props: {
             session: await getServerSession(authOptions),
-            permissions: permissions
+            permissions,
+            userAvatar
         }
     }
 }

@@ -86,7 +86,7 @@ export default function Dashboard () {
                             <CardDescription>Manage users and their accounts</CardDescription>
                         </CardContent>
                         <CardFooter>
-                            <Button type="button">User Management</Button>
+                            <Link href={"/users"}><Button type="button">User Management</Button></Link>
                         </CardFooter>
                     </Card>
                 </ShowWhen>

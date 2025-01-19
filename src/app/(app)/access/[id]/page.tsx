@@ -6,7 +6,7 @@ import Link from "next/link";
 export default async function EditRolePage ({ params }: { params: Promise<{ id: string}>}) {
     const { id } = await params;
     const permission = await getPermission(id);
-
+    
     if (!permission) return null;
     return (
         <main className="flex flex-col w-full px-4 md:px-8 mt-6 md:mt-[10vh]">

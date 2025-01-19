@@ -70,7 +70,7 @@ export const deletePermission = async (id: string, user: string) => {
 
         await permissionsModel.findOneAndDelete({_id: id});
 
-        createLogEvent({who: new mongoose.Types.ObjectId(user), what: LOGGER_EVENTS.permissionUpdated, data: JSON.stringify({id})})
+        createLogEvent({who: new mongoose.Types.ObjectId(user), what: LOGGER_EVENTS.permissionDeleted, data: JSON.stringify({id})})
     } catch (error) {
         throw error;
     }
