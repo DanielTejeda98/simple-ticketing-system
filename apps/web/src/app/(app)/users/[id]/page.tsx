@@ -10,5 +10,5 @@ export default async function EditUser ({ params }: { params: Promise<{ id: stri
     const roles = await getAllPermissions() as Permissions[];
 
     if (!retrievedUser) return null;
-    return <EditUserView retrievedUser={retrievedUser} roles={roles} />
+    return <EditUserView retrievedUser={JSON.parse(JSON.stringify(retrievedUser))} roles={JSON.parse(JSON.stringify(roles))} />
 }

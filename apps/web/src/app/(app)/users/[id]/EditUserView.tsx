@@ -1,3 +1,5 @@
+"use client"
+
 import { Badge } from "@/app/components/ui/badge";
 import { Button } from "@/app/components/ui/button";
 import EditUserForm from "@/app/components/Users/EditUserForm/EditUserForm";
