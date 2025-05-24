@@ -30,7 +30,7 @@ export default function Dashboard () {
                             <CardDescription>Create a new ticket for an issue or a request</CardDescription>
                         </CardContent>
                         <CardFooter>
-                            <Button type="button">New Ticket</Button>
+                            <Link href={"/ticket/new"}><Button type="button">New Ticket</Button></Link>
                         </CardFooter>
                     </Card>
                 </ShowWhen>
@@ -52,13 +52,13 @@ export default function Dashboard () {
                 <ShowWhen condition={checkAbility(ability, "read-any", "read", "tickets")}>
                     <Card>
                         <CardHeader>
-                            <CardTitle>Check existing ticket</CardTitle>
+                            <CardTitle>Check existing tickets</CardTitle>
                         </CardHeader>
                         <CardContent>
-                            <CardDescription>Find information on an existing ticket</CardDescription>
+                            <CardDescription>Find information on an existing tickets</CardDescription>
                         </CardContent>
                         <CardFooter>
-                            <Button type="button">Check Ticket</Button>
+                            <Link href={"/ticket"}><Button type="button">Check Tickets</Button></Link>
                         </CardFooter>
                     </Card>
                 </ShowWhen>

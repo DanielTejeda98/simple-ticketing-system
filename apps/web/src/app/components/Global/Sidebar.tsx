@@ -6,20 +6,42 @@ import { Avatar, AvatarFallback, AvatarImage, MemoAvatarImage } from "../ui/avat
 import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
 import { signOut, useSession } from "next-auth/react";
 import Link from "next/link";
+import ShowWhen from "./Show";
+import { checkAbility } from "@/app/utils/checkAbility";
+import { useContext } from "react";
+import { AbilityContext } from "@/app/providers/AccessProvider";
 
 export default function Sidebar ({userAvatar}: {userAvatar: string}) {
     const { data } = useSession();
+    const ability = useContext(AbilityContext)
 
     if (!data) return null;
     const user = data.user!;
-
+    
     return (
         <div className="flex bg-blue-600 border-b border-slate-200 px-2 py-3 justify-between md:flex-col md:h-dvh md:border-r md:border-b-0 sticky top-0">
             <div className="flex md:flex-col">
                 <div className="hidden md:flex flex-col md:border-b md:pb-2">
-                    <Button variant={"outline"}>
-                        <FontAwesomeIcon icon={faPlus} />
-                    </Button>
+                    <Popover>
+                        <PopoverTrigger asChild>
+                            <Button variant={"outline"}>
+                                <FontAwesomeIcon icon={faPlus} />
+                            </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="ml-2" align="end" side="right">
+                            <p>Quick Actions</p>
+                            <div className="flex gap-2 items-center w-full">
+                                <ShowWhen condition={checkAbility(ability, "create-any", "create", "tickets")}>
+                                    <Link href="/ticket/new" className="w-full">
+                                        <Button variant={"outline"} className="w-full">
+                                            <FontAwesomeIcon icon={faPlus} />
+                                            Create new ticket
+                                        </Button>
+                                    </Link>
+                                </ShowWhen>
+                            </div>
+                        </PopoverContent>
+                    </Popover>
                 </div>
 
                 <div className="md:flex flex-col md:pt-2 text-white">
