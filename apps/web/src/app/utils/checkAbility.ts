@@ -2,7 +2,23 @@ import { RawRuleOf } from "@casl/ability";
 import { actions, AppAbility, createAbility, subjects } from "../lib/appAbility";
 import handleUnathorized from "./unauthorized";
 
-export function checkAbility (ability: AppAbility, any: typeof actions[number], singular: typeof actions[number], resource: typeof subjects[number]) {
+export type PickActionsWithAny<T extends readonly string[]> = T extends readonly (infer U)[] 
+  ? U extends `${string}-any` 
+    ? U 
+    : never
+  : never;
+
+export type PickActionsSingular<T extends readonly string[]> = T extends readonly (infer U)[] 
+  ? U extends `${string}-any` 
+    ? never 
+    : U
+  : never;
+
+export function checkAnyAccessAbility (ability: AppAbility, any: PickActionsWithAny<typeof actions>, resource: typeof subjects[number]) {
+  return ability.can(any, resource);
+}
+
+export function checkAbility (ability: AppAbility, any: PickActionsWithAny<typeof actions>, singular: PickActionsSingular<typeof actions>, resource: typeof subjects[number]) {
     return ability.can(any, resource) || ability.can(singular, resource);
 }
 

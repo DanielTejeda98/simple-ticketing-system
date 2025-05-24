@@ -4,14 +4,14 @@ import { Badge } from "@/app/components/ui/badge";
 import { Button } from "@/app/components/ui/button";
 import { getProject } from "@/app/controllers/projectController";
 import { getAllUsers } from "@/app/controllers/userController";
-import { Project } from "@/app/models/projectModel";
+import { Project as ProjectModel } from "@/app/models/projectModel";
 import { User } from "@/app/models/userModel";
 import mongoose from "mongoose";
 import Link from "next/link";
 
 export default async function Project ({ params }: { params: Promise<{ id: string}>}) {
     const { id } = await params;
-    const retrievedProject = await getProject(id) as Project;
+    const retrievedProject = await getProject(id) as ProjectModel;
     const retrievedUsers = await getAllUsers() as User[]
 
     if (!retrievedProject) return null;

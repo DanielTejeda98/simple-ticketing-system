@@ -3,7 +3,7 @@ import AccessProvider from "@/app/providers/AccessProvider";
 import AuthProvider from "@/app/providers/AuthProvier";
 import { getInitialLoad } from "@/app/utils/getIntialLoad";
 
-export default async function AccountLayout ({
+export default async function ProjectsLayout ({
     children,
   }: Readonly<{
     children: React.ReactNode;

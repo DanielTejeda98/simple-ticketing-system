@@ -17,6 +17,7 @@ import { useSession } from "next-auth/react"
 import { UpdateProjectAction } from "@/app/server-actions/UpdateProject"
 import { useEffect } from "react"
 import { ArchiveProjectAction } from "@/app/server-actions/ArchiveProject"
+import SelectProjectMembers from "../SelectProjectMembers"
 
 export default function ProjectForm ({ project, resources, archived }: { project: Project, resources: UserModel[], archived: boolean }) {
     const { data } = useSession();
@@ -30,6 +31,8 @@ export default function ProjectForm ({ project, resources, archived }: { project
             projectForm.setValue("description", project.description);
             projectForm.setValue("boughtWorkHours", project.boughtWorkHours);
             projectForm.setValue("leadResource", project.leadResource?.toString());
+            projectForm.setValue("owningClient", project.owningClient?.toString());
+            projectForm.setValue("members", project.members.map((member) => (member as mongoose.Types.ObjectId).toString()));
             projectForm.setValue("slug", project.slug);
             projectForm.setValue("updater", data!.user!.id);
         }
@@ -39,7 +42,6 @@ export default function ProjectForm ({ project, resources, archived }: { project
         // When successful, it will redirect the user, on error, it will return an error
         const error = await UpdateProjectAction(values) as Error;
         if (error) {
-
             projectForm.setError("root", {
                 message: typeof error === "object" ? error.message : error
             })
@@ -130,6 +132,36 @@ export default function ProjectForm ({ project, resources, archived }: { project
                 <div className="flex flex-col w-1/3 gap-2">
                 <FormField 
                     control={projectForm.control}
+                    name="owningClient"
+                    render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>Project Owned By</FormLabel>
+                            <FormControl>
+                                <Select defaultValue={project.owningClient?.toString()}
+                                        {...field} 
+                                        onValueChange={(e) => projectForm.setValue("owningClient", e)}
+                                        disabled={archived}>
+                                    <SelectTrigger className="w-full">
+                                        <SelectValue placeholder="Unassigned" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        { resources.map(resource => (
+                                            <SelectItem value={(resource._id as mongoose.Types.ObjectId).toString()} key={(resource._id as mongoose.Types.ObjectId).toString()}>
+                                                <User user={resource} onlyName></User>
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </FormControl>
+                            <FormDescription className={ errors?.description?.message ? 'text-destructive' : ''}>
+                                { errors?.description?.message ? errors.description.message : null}
+                            </FormDescription>
+                        </FormItem>
+                    )}>
+                </FormField>
+
+                <FormField 
+                    control={projectForm.control}
                     name="leadResource"
                     render={({ field }) => (
                         <FormItem>
@@ -150,6 +182,27 @@ export default function ProjectForm ({ project, resources, archived }: { project
                                         ))}
                                     </SelectContent>
                                 </Select>
+                            </FormControl>
+                            <FormDescription className={ errors?.description?.message ? 'text-destructive' : ''}>
+                                { errors?.description?.message ? errors.description.message : null}
+                            </FormDescription>
+                        </FormItem>
+                    )}>
+                </FormField>
+
+                <FormField 
+                    control={projectForm.control}
+                    name="members"
+                    render={({ field }) => (
+                        <FormItem className="flex flex-col">
+                            <FormLabel>Manage Members ({field.value?.length || 0} users assigned)</FormLabel>
+                            <FormControl>
+                                <SelectProjectMembers project={project}
+                                                      resources={resources}
+                                                      value={field.value}
+                                                      disabled={archived}
+                                                      onAddMember={(id) => projectForm.setValue("members", [...field.value, id])}
+                                                      onRemoveMember={(id) => projectForm.setValue("members", field.value.filter((memberId: string) => memberId !== id))} />
                             </FormControl>
                             <FormDescription className={ errors?.description?.message ? 'text-destructive' : ''}>
                                 { errors?.description?.message ? errors.description.message : null}

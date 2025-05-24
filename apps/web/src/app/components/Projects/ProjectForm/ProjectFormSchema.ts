@@ -8,6 +8,8 @@ const ProjectFormSchema = z.object({
     description: z.string(),
     boughtWorkHours: z.number(),
     leadResource: z.string().or(z.undefined()),
+    owningClient: z.string().or(z.undefined()),
+    members: z.array(z.string()),
     updater: z.string()
 })
 

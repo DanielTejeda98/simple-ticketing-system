@@ -18,7 +18,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "../../ui/avatar"
 import { UploadPicture } from "@/app/server-actions/UploadPicture"
 import { UpdateUserActionFromManagement } from "@/app/server-actions/UpdateUser"
 
-export default function EditUserForm ({ user, permissions, isUserManagement }: {user: User, permissions: Permissions[], isUserManagement?: boolean}) {
+export default function EditUserForm ({ user, permissions }: {user: User, permissions: Permissions[], isUserManagement?: boolean}) {
     const editUserForm = useForm<z.infer<typeof EditUserFormSchema>>({
         resolver: zodResolver(EditUserFormSchema)
     })
@@ -32,7 +32,7 @@ export default function EditUserForm ({ user, permissions, isUserManagement }: {
         editUserForm.setValue("lastName", user.lastName);
         editUserForm.setValue("title", user.title);
         editUserForm.setValue("email", user.email);
-        editUserForm.setValue("access", ((user.access as Permissions)?._id as mongoose.Types.ObjectId).toString());
+        editUserForm.setValue("access", ((user.access as Permissions)?._id as mongoose.Types.ObjectId)?.toString());
         editUserForm.setValue("updater", data!.user!.id);
         editUserForm.setValue("avatar", user.avatar);
     }, [user, editUserForm, data])

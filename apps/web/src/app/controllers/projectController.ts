@@ -10,7 +10,9 @@ import { getUsers } from "./userController";
 import { sendMail } from "../lib/mailer";
 import ProjectAssignedEmailTemplate from "../emails/projectAssigned";
 import userModel from "../models/userModel";
-import { checkAbilityServer } from "../utils/checkAbilityServer";
+import { checkAbilityServer, checkAnyAbilityServer } from "../utils/checkAbilityServer";
+import { authOptions } from "../config/authOptions";
+import { getServerSession } from "next-auth";
 
 export const createProject = async (project: z.infer<typeof NewProjectFormSchema>, creator: string) => {
     try {
@@ -53,21 +55,29 @@ export const updateProject = async (project: z.infer<typeof ProjectFormSchema>) 
         }
 
         const retrievedProject = await getProject(project.slug)
-        const notifyResourceLead = project.leadResource && retrievedProject.leadResource?.toString() !== project.leadResource 
+        if (!retrievedProject) {
+            throw new Error(`No project found with ${project.slug}`);
+        }
+
+        const didProjectLeadChange = project.leadResource && retrievedProject.leadResource?.toString() !== project.leadResource 
         && project.leadResource !== project.updater;
 
         const oldLead = retrievedProject.leadResource;
+        const projectLead = project.leadResource ? new mongoose.Types.ObjectId(project.leadResource) : null;
+        const projectOwner = project.owningClient ? new mongoose.Types.ObjectId(project.owningClient) : null;
     
         retrievedProject.name = project.name;
         retrievedProject.description = project.description;
         retrievedProject.boughtWorkHours = project.boughtWorkHours;
-        retrievedProject.leadResource = project.leadResource;
-        retrievedProject.updatedBy = project.updater;
+        retrievedProject.leadResource = projectLead;
+        retrievedProject.owningClient = projectOwner;
+        retrievedProject.updatedBy = new mongoose.Types.ObjectId(project.updater);
+        retrievedProject.members = processProjectMembers(project.members, projectLead, projectOwner) as mongoose.Types.Array<mongoose.Types.ObjectId>;
 
         await retrievedProject.save();
 
-        if (notifyResourceLead) {
-            sendResourceLeadChangeNotification(project.leadResource!, project, oldLead)
+        if (didProjectLeadChange) {
+            sendResourceLeadChangeNotification(project.leadResource!, project, oldLead?.toString())
         }
 
         createLogEvent({who: new mongoose.Types.ObjectId(project.updater), what: LOGGER_EVENTS.projectUpdated, data: JSON.stringify(project)});
@@ -100,9 +110,17 @@ export const archiveProject = async (projectSlug: string, archiver: string) => {
 
 export const getAllProjects = async (includeArchived?: boolean): Promise<Project[]> => {
     try {
+        const userId = await checkAuthAndGetUserId();
+        const readAny = await checkProjectAnyAbility(userId);
+        
         await dbConnect();
 
-        const findQuery = includeArchived ? {} : {archived: false}
+        const findQuery = {
+            $and: [
+                {...!includeArchived ? { archived: false } : {}},
+                {...!readAny ? {members: { $in: [userId]}} : {}}
+            ]
+        }
             
         return await projectModel.find(findQuery).populate({
             path: "leadResource",
@@ -116,15 +134,24 @@ export const getAllProjects = async (includeArchived?: boolean): Promise<Project
 
 export const getAllArchivedProjects = async (): Promise<Project[]> => {
     try {
+        const userId = await checkAuthAndGetUserId();
+        const readAny = await checkProjectAnyAbility(userId);
+        
         await dbConnect();
+        const findQuery = {
+            $and: [
+                { archived: true },
+                {...!readAny ? {members: { $in: [userId]}} : {}}
+            ]
+        }
             
-        return await projectModel.find({archived: true})
+        return await projectModel.find(findQuery)
     } catch (error) {
         throw error;
     }
 }
 
-export const getProject = async (projectSlug: string) => {
+export const getProject = async (projectSlug: string): Promise<Project | null> => {
     try {
         await dbConnect();
 
@@ -155,4 +182,26 @@ const sendResourceLeadChangeNotification = async (resourceLead: string, project:
         throw error;
     }
     
+}
+
+const checkAuthAndGetUserId = async () => {
+    const session = await getServerSession(authOptions);
+    if (!session) {
+        throw new Error("Must be signed in for this action");
+    }
+
+    return session.user.id;
+}
+
+const checkProjectAnyAbility = async (userId: string) => {
+    return await checkAnyAbilityServer(userId, "read-any", "projects");
+}
+
+const processProjectMembers = (updatedMembers: string[], lead?: mongoose.Types.ObjectId | null, owner?: mongoose.Types.ObjectId | null)
+: mongoose.Types.ObjectId[] => {
+    // Check if updated members includes the lead and owner, if not, push them into the array
+    if (lead && !updatedMembers.includes(lead.toString())) updatedMembers.push(lead.toString());
+    if (owner && !updatedMembers.includes(owner.toString())) updatedMembers.push(owner.toString());
+
+    return updatedMembers.map(member => new mongoose.Types.ObjectId(member))
 }

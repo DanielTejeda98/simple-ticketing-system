@@ -14,6 +14,7 @@ export interface User extends mongoose.Document {
     avatar: string;
     resetToken: string;
     resetTokenExpire: Date;
+    assignedProjects: mongoose.Schema.Types.ObjectId[]
 }
 
 const UserSchema = new mongoose.Schema<User>({
@@ -64,7 +65,11 @@ const UserSchema = new mongoose.Schema<User>({
     },
     resetTokenExpire: {
         type: Date
-    }
+    },
+    assignedProjects: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Project"
+    }],
 })
 
 export default mongoose.models.User || mongoose.model<User>("User", UserSchema);

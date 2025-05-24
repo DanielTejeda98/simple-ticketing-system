@@ -5,15 +5,15 @@ export interface Project extends mongoose.Document {
     name: string,
     slug: string,
     description: string,
-    tickets: mongoose.Types.Array<mongoose.Schema.Types.ObjectId>,
+    tickets: mongoose.Types.Array<mongoose.Types.ObjectId>,
     boughtWorkHours: number,
     totalWorkedHours: number,
-    leadResource: mongoose.Types.ObjectId | User,
-    owningClient: mongoose.Types.ObjectId | User,
-    members: mongoose.Types.Array<mongoose.Schema.Types.ObjectId> | mongoose.Types.Array<User>,
+    leadResource: mongoose.Types.ObjectId | User | string | null | undefined,
+    owningClient: mongoose.Types.ObjectId | User | string | null | undefined,
+    members: mongoose.Types.Array<mongoose.Types.ObjectId> | mongoose.Types.Array<User> | string[],
     archived: boolean,
-    createdBy: mongoose.Schema.Types.ObjectId,
-    updatedBy: mongoose.Schema.Types.ObjectId
+    createdBy: mongoose.Types.ObjectId,
+    updatedBy: mongoose.Types.ObjectId
 }
 
 const projectSchema = new mongoose.Schema<Project>({

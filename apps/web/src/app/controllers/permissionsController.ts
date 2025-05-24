@@ -10,7 +10,7 @@ import { checkAbilityServer } from "../utils/checkAbilityServer";
 export const createPermission = async (newPermission: z.infer<typeof RoleFormSchema>) => {
     const { name, creator, updator, ...permissions} = newPermission;
 
-    if(!checkAbilityServer(creator!, "update", "update-any", "permissions")) {
+    if(!checkAbilityServer(creator!, "update-any", "update", "permissions")) {
         throw new Error("User does not have permissions for this action!")
     }
 
@@ -37,7 +37,7 @@ export const createPermission = async (newPermission: z.infer<typeof RoleFormSch
 export const updatePermission = async (id: string, newPermission: z.infer<typeof RoleFormSchema>) => {
     const { name, creator, updator, ...permissions} = newPermission;
 
-    if(!checkAbilityServer(updator!, "update", "update-any", "permissions")) {
+    if(!checkAbilityServer(updator!, "update-any", "update", "permissions")) {
         throw new Error("User does not have permissions for this action!")
     }
 
@@ -64,7 +64,7 @@ export const deletePermission = async (id: string, user: string) => {
     try {
         await dbConnect();
 
-        if(!checkAbilityServer(user, "delete", "delete-any", "permissions")) {
+        if(!checkAbilityServer(user, "delete-any", "delete", "permissions")) {
             throw new Error("User does not have permissions for this action!")
         }
 

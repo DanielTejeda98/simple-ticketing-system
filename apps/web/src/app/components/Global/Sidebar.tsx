@@ -68,7 +68,7 @@ export default function Sidebar ({userAvatar}: {userAvatar: string}) {
 
                         <div className="flex flex-wrap gap-3 mt-3">
                             <Button className="w-full">
-                                <Link href={"/account"}><FontAwesomeIcon icon={faGear} /> User settings</Link>
+                                <Link href={"/account/my-account"}><FontAwesomeIcon icon={faGear} /> User settings</Link>
                             </Button>
 
                             <Button className="w-full" variant={"destructive"} onClick={() => signOut()}>
