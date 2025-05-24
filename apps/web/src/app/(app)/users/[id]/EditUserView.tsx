@@ -7,7 +7,7 @@ import { Permissions } from "@/app/models/permissionsModel";
 import { User } from "@/app/models/userModel";
 import { AbilityContext } from "@/app/providers/AccessProvider";
 import { checkAbility } from "@/app/utils/checkAbility";
-import handleUnathorized from "@/app/utils/unauthorized";
+import { handleUnathorized } from "@/app/utils/redirectHandlers";
 import mongoose from "mongoose";
 import Link from "next/link";
 import { useContext } from "react";

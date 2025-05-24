@@ -6,15 +6,17 @@ import { getProject } from "@/app/controllers/projectController";
 import { getAllUsers } from "@/app/controllers/userController";
 import { Project as ProjectModel } from "@/app/models/projectModel";
 import { User } from "@/app/models/userModel";
+import { handleNotFound } from "@/app/utils/redirectHandlers";
 import mongoose from "mongoose";
 import Link from "next/link";
 
 export default async function Project ({ params }: { params: Promise<{ id: string}>}) {
     const { id } = await params;
     const retrievedProject = await getProject(id) as ProjectModel;
+    if (!retrievedProject) handleNotFound();
+    
     const retrievedUsers = await getAllUsers() as User[]
 
-    if (!retrievedProject) return null;
     return (
         <main className="flex flex-col w-full px-4 md:px-8 mt-6 md:mt-[10vh]">
             <div className="bg-gradient-to-r from-sky-500 to-indigo-500 bg-clip-text max-h-fit">

@@ -155,7 +155,13 @@ export const getProject = async (projectSlug: string): Promise<Project | null> =
     try {
         await dbConnect();
 
-        return await projectModel.findOne({slug: projectSlug})
+        const userId = await checkAuthAndGetUserId();
+        const readAny = await checkProjectAnyAbility(userId);
+
+        return await projectModel.findOne({$and: [
+            { slug: projectSlug },
+            {...!readAny ? {members: { $in: [userId]}} : {}}
+        ]})
     } catch (error) {
         throw error;
     }

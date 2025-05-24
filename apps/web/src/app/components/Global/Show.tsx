@@ -15,6 +15,6 @@ export default function ShowWhen ({children, condition}: {children: ReactNode, c
       ) : null;
 }
 
-const Else = ({children}: {children: ReactNode}) => {
+export const Else = ({children}: {children: ReactNode}) => {
     return <>{children}</>
 }

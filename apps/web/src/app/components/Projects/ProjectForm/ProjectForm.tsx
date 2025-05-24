@@ -15,15 +15,20 @@ import mongoose from "mongoose"
 import User from "../../Global/User"
 import { useSession } from "next-auth/react"
 import { UpdateProjectAction } from "@/app/server-actions/UpdateProject"
-import { useEffect } from "react"
+import { useContext, useEffect } from "react"
 import { ArchiveProjectAction } from "@/app/server-actions/ArchiveProject"
 import SelectProjectMembers from "../SelectProjectMembers"
+import { checkAbility } from "@/app/utils/checkAbility"
+import ShowWhen, { Else } from "../../Global/Show"
+import { AbilityContext } from "@/app/providers/AccessProvider"
 
 export default function ProjectForm ({ project, resources, archived }: { project: Project, resources: UserModel[], archived: boolean }) {
     const { data } = useSession();
     const projectForm = useForm<z.infer<typeof ProjectFormSchema>>({
         resolver: zodResolver(ProjectFormSchema)
     })
+
+    const ability = useContext(AbilityContext)
 
     useEffect(() => {
         if (!archived) {
@@ -100,27 +105,36 @@ export default function ProjectForm ({ project, resources, archived }: { project
                     </FormField>
                     
                     <div className="flex">
-                        <FormField 
-                            control={projectForm.control}
-                            name="boughtWorkHours"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>Project Total Hours Purchased</FormLabel>
-                                    <FormControl>
-                                        <Input type="number" defaultValue={project.boughtWorkHours} 
-                                         {...field}
-                                         onChange={(e) => projectForm.setValue("boughtWorkHours", Number(e.target.value))}
-                                         min={0}
-                                         disabled={archived}></Input>
-                                    </FormControl>
-                                    <FormDescription className={ errors?.boughtWorkHours?.message ? 'text-destructive' : ''}>
-                                        { errors?.boughtWorkHours?.message ? errors.boughtWorkHours.message : null}
-                                    </FormDescription>
-                                </FormItem>
-                            )}>
-                        </FormField>
-                        <Button className="mt-8 ml-2" type="button" disabled={archived} variant={"outline"} onClick={() => projectForm.setValue("boughtWorkHours", (projectForm.getValues("boughtWorkHours") || 0) + 5)}>Add 5 Hours</Button>
-                        <Button className="mt-8 ml-2" type="button" disabled={archived} variant={"outline"} onClick={() => projectForm.setValue("boughtWorkHours", (projectForm.getValues("boughtWorkHours") || 0) + 10)}>Add 10 Hours</Button>
+                        <ShowWhen condition={checkAbility(ability, "update-any", "update", "projects/costs")}>
+                            <FormField 
+                                control={projectForm.control}
+                                name="boughtWorkHours"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Project Total Hours Purchased</FormLabel>
+                                        <FormControl>
+                                            <Input type="number" defaultValue={project.boughtWorkHours} 
+                                            {...field}
+                                            onChange={(e) => projectForm.setValue("boughtWorkHours", Number(e.target.value))}
+                                            min={0}
+                                            disabled={archived}></Input>
+                                        </FormControl>
+                                        <FormDescription className={ errors?.boughtWorkHours?.message ? 'text-destructive' : ''}>
+                                            { errors?.boughtWorkHours?.message ? errors.boughtWorkHours.message : null}
+                                        </FormDescription>
+                                    </FormItem>
+                                )}>
+                            </FormField>
+                            <Button className="mt-8 ml-2" type="button" disabled={archived} variant={"outline"} onClick={() => projectForm.setValue("boughtWorkHours", (projectForm.getValues("boughtWorkHours") || 0) + 5)}>Add 5 Hours</Button>
+                            <Button className="mt-8 ml-2" type="button" disabled={archived} variant={"outline"} onClick={() => projectForm.setValue("boughtWorkHours", (projectForm.getValues("boughtWorkHours") || 0) + 10)}>Add 10 Hours</Button>
+
+                            <Else>
+                                <div>
+                                    <p className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">Project Total Hours Purchased</p>
+                                    <p className="text-sm font-medium leading-none mt-2">{project.boughtWorkHours}</p>
+                                </div>
+                            </Else>
+                        </ShowWhen>
                     </div>
                     
                     <div className="flex gap-2 mt-8">

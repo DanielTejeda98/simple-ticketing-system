@@ -1,6 +1,6 @@
 import { RawRuleOf } from "@casl/ability";
 import { actions, AppAbility, createAbility, subjects } from "../lib/appAbility";
-import handleUnathorized from "./unauthorized";
+import { handleUnathorized } from "./redirectHandlers";
 
 export type PickActionsWithAny<T extends readonly string[]> = T extends readonly (infer U)[] 
   ? U extends `${string}-any` 

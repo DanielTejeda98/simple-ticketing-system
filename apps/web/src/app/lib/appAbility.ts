@@ -1,7 +1,7 @@
 import { createMongoAbility, MongoAbility, RawRuleOf, ForcedSubject } from '@casl/ability';
 
 export const actions = ['create', 'create-any', 'read', 'read-any', 'update', 'update-any', 'delete', 'delete-any'] as const;
-export const subjects = ['tickets', 'projects', 'users', 'audit', 'permissions', 'system', 'all'] as const;
+export const subjects = ['tickets', 'projects', 'projects/costs', 'users', 'audit', 'permissions', 'system', 'all'] as const;
 
 export type Abilities = [
     typeof actions[number],
