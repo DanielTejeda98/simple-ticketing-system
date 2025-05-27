@@ -19,7 +19,7 @@ export default function Sidebar ({userAvatar}: {userAvatar: string}) {
     const user = data.user!;
     
     return (
-        <div className="flex bg-blue-600 border-b border-slate-200 px-2 py-3 justify-between md:flex-col md:h-dvh md:border-r md:border-b-0 sticky top-0">
+        <div className="flex bg-blue-600 border-b border-slate-200 px-2 py-3 justify-between md:flex-col md:h-dvh md:border-b-0 sticky top-0">
             <div className="flex md:flex-col">
                 <div className="hidden md:flex flex-col md:border-b md:pb-2">
                     <Popover>

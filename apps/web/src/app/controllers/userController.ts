@@ -289,6 +289,9 @@ export const getUserPermissions = async (id: string) => {
             model: permissionsModel
         }).exec();
 
+        if (!user) {
+            return JSON.parse("[]");
+        }
         return JSON.parse(user.access.permissions);
     } catch (error) {
         throw error;

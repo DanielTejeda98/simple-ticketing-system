@@ -23,11 +23,17 @@ export default async function ProjectsPage () {
                 <TableCaption>List of tickets</TableCaption>
                 <TableHeader>
                     <TableRow>
-                        <TableHead>Ticket ID</TableHead>
+                        <TableHead>Number</TableHead>
+                        <TableHead>Opened</TableHead>
+                        <TableHead>Short Description</TableHead>
+                        <TableHead>Caller</TableHead>
+                        <TableHead>Priority</TableHead>
+                        <TableHead>State</TableHead>
                         <TableHead>Project</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead>Assigned Resource</TableHead>
+                        <TableHead>Category</TableHead>
+                        <TableHead>Assigned to</TableHead>
                         <TableHead>Last Update</TableHead>
+                        <TableHead>Updated by</TableHead>
                     </TableRow>
                 </TableHeader>
                 <TableBody>
