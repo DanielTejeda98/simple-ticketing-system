@@ -22,7 +22,9 @@ export const LOGGER_EVENTS = {
     projectArchived: "archived project",
     permissionCreated: "created permission",
     permissionUpdated: "updated permission",
-    permissionDeleted: "deleted permission"
+    permissionDeleted: "deleted permission",
+    ticketCreated: "created ticket",
+    ticketUpdated: "updated ticket",
 }
 
 const createLogEvent = async (event: LogEvent) => {
