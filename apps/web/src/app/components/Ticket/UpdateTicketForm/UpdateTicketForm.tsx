@@ -2,7 +2,7 @@
 
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-import NewTicketFormSchema from "./NewTicketFormSchema";
+import UpdateTicketFormSchema from "./UpdateTicketSchema";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormDescription } from "../../ui/form";
 import { Alert, AlertDescription, AlertTitle } from "../../ui/alert";
@@ -15,17 +15,52 @@ import { User as UserModel } from "@/app/models/userModel";
 import { Project } from "@/app/models/projectModel";
 import { CreateTicketAction } from "@/app/server-actions/CreateTicket";
 import { Button } from "../../ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "../../ui/tabs";
+import { useState } from "react";
+import { useSession } from "next-auth/react";
+import { Ticket } from "@/app/models/ticketModel";
+import RichtextEditor from "../../ui/rich-text-input";
 
-export default function NewTicketForm({projects, resources}: { projects: Project[], resources: UserModel[]}) {
-    const newTicketForm = useForm<z.infer<typeof NewTicketFormSchema>>({
-        resolver: zodResolver(NewTicketFormSchema)
+export default function UpdateTicketForm({ticket, projects, resources}: { ticket: Ticket, projects: Project[], resources: UserModel[]}) {
+    const { data } = useSession();
+    const userId = (data && data.user.id!) || "";
+    
+    const updateTicketForm = useForm<z.infer<typeof UpdateTicketFormSchema>>({
+        resolver: zodResolver(UpdateTicketFormSchema),
+        defaultValues: {
+            number: ticket.number,
+            project: (ticket.project as Project)._id.toString(),
+            caller: ticket.caller ? (ticket.caller as UserModel)._id.toString() : "",
+            contactType: ticket.contactType,
+            state: ticket.state,
+            impact: ticket.impact,
+            urgency: ticket.urgency,
+            priority: ticket.priority,
+            assignedTo: ticket.assignedTo ? (ticket.assignedTo as UserModel)._id.toString() : "",
+            category: ticket.category,
+            shortDescription: ticket.shortDescription,
+            description: ticket.description,
+            notes: ticket.notes?.map(note => note && {
+                ...note,
+                createdAt: note.createdAt instanceof Date ? note.createdAt.toISOString() : note.createdAt,
+                updatedAt: note.updatedAt instanceof Date ? note.updatedAt.toISOString() : note.updatedAt,
+            }),
+            attachments: ticket.attachments?.map(att => att && ({
+                ...att,
+                createdAt: att.createdAt instanceof Date ? att.createdAt.toISOString() : att.createdAt,
+            })),
+            resolutionInformation: {
+                resolutionSummary: ticket.resolutionInformation?.resolutionSummary || ""
+            }
+        }
     })
+    const [newNote, setNewNote] = useState("");
 
-    async function onSubmit(values: z.infer<typeof NewTicketFormSchema>) {
+    async function onSubmit(values: z.infer<typeof UpdateTicketFormSchema>) {
             // When successful, it will redirect the user, on error, it will return an error
             const error = await CreateTicketAction(values) as Error;
             if (error) {
-                newTicketForm.setError("root", {
+                updateTicketForm.setError("root", {
                     message: typeof error === "object" ? error.message : error
                 })
     
@@ -33,13 +68,13 @@ export default function NewTicketForm({projects, resources}: { projects: Project
             }
         }
 
-    const errors = newTicketForm.formState.errors;
+    const errors = updateTicketForm.formState.errors;
 
     return (
-        <Form {...newTicketForm}>
-            <form onSubmit={newTicketForm.handleSubmit(onSubmit)} className="space-y-8">
+        <Form {...updateTicketForm}>
+            <form onSubmit={updateTicketForm.handleSubmit(onSubmit)} className="space-y-8">
                 <div className="flex gap-2 mt-8">
-                    <Button type="submit" className="w-fit">Create ticket</Button>
+                    <Button type="submit" className="w-fit">Update ticket</Button>
                 </div>
                 { errors?.root?.message ? (
                     <Alert variant={"destructive"}>
@@ -52,7 +87,7 @@ export default function NewTicketForm({projects, resources}: { projects: Project
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-1">
                     <FormField
-                        control={newTicketForm.control}
+                        control={updateTicketForm.control}
                         name="number"
                         render={({ field }) => (
                             <FormItem className="md:w-1/2">
@@ -68,7 +103,7 @@ export default function NewTicketForm({projects, resources}: { projects: Project
                     </FormField>
 
                     <FormField
-                        control={newTicketForm.control}
+                        control={updateTicketForm.control}
                         name="project"
                         render={({ field }) => (
                             <FormItem className="md:w-1/2">
@@ -76,7 +111,7 @@ export default function NewTicketForm({projects, resources}: { projects: Project
                                 <FormControl>
                                     <Select {...field}
                                             defaultValue={projects.length === 1 ? (projects[0]._id as mongoose.Types.ObjectId).toString() : ""}
-                                            onValueChange={(e) => newTicketForm.setValue("project", e)}>
+                                            onValueChange={(e) => updateTicketForm.setValue("project", e)}>
                                         <SelectTrigger className="w-full">
                                             <SelectValue placeholder="Unassigned" />
                                         </SelectTrigger>
@@ -97,14 +132,14 @@ export default function NewTicketForm({projects, resources}: { projects: Project
                     </FormField>
 
                     <FormField
-                        control={newTicketForm.control}
+                        control={updateTicketForm.control}
                         name="caller"
                         render={({ field }) => (
                             <FormItem className="md:w-1/2">
                                 <FormLabel>Caller</FormLabel>
                                 <FormControl>
                                     <Select {...field} 
-                                            onValueChange={(e) => newTicketForm.setValue("caller", e)}>
+                                            onValueChange={(e) => updateTicketForm.setValue("caller", e)}>
                                         <SelectTrigger className="w-full">
                                             <SelectValue placeholder="Unassigned" />
                                         </SelectTrigger>
@@ -125,14 +160,14 @@ export default function NewTicketForm({projects, resources}: { projects: Project
                     </FormField>
 
                     <FormField
-                        control={newTicketForm.control}
+                        control={updateTicketForm.control}
                         name="contactType"
                         render={({ field }) => (
                             <FormItem className="md:w-1/2">
                                 <FormLabel>Contact Type</FormLabel>
                                 <FormControl>
                                     <Select {...field} defaultValue={field.value}
-                                            onValueChange={(e) => newTicketForm.setValue("contactType", e)}>
+                                            onValueChange={(e) => updateTicketForm.setValue("contactType", e)}>
                                         <SelectTrigger>
                                             <SelectValue placeholder="Select contact type" />
                                         </SelectTrigger>
@@ -151,14 +186,14 @@ export default function NewTicketForm({projects, resources}: { projects: Project
                         )}>
                     </FormField>
                     <FormField
-                        control={newTicketForm.control}
+                        control={updateTicketForm.control}
                         name="state"
                         render={({ field }) => (
                             <FormItem className="md:w-1/2">
                                 <FormLabel>State</FormLabel>
                                 <FormControl>
                                     <Select {...field} defaultValue={"new"}
-                                            onValueChange={(e) => newTicketForm.setValue("state", e)}>
+                                            onValueChange={(e) => updateTicketForm.setValue("state", e)}>
                                         <SelectTrigger>
                                             <SelectValue placeholder="Select state" />
                                         </SelectTrigger>
@@ -178,14 +213,14 @@ export default function NewTicketForm({projects, resources}: { projects: Project
                         )}>
                     </FormField>
                     <FormField
-                        control={newTicketForm.control}
+                        control={updateTicketForm.control}
                         name="impact"
                         render={({ field }) => (
                             <FormItem className="md:w-1/2">
                                 <FormLabel>Impact</FormLabel>
                                 <FormControl>
                                     <Select {...field} defaultValue={field.value}
-                                            onValueChange={(e) => newTicketForm.setValue("impact", e)}>
+                                            onValueChange={(e) => updateTicketForm.setValue("impact", e)}>
                                         <SelectTrigger>
                                             <SelectValue placeholder="Select impact" />
                                         </SelectTrigger>
@@ -204,14 +239,14 @@ export default function NewTicketForm({projects, resources}: { projects: Project
                         )}>
                     </FormField>
                     <FormField
-                        control={newTicketForm.control}
+                        control={updateTicketForm.control}
                         name="urgency"
                         render={({ field }) => (
                             <FormItem className="md:w-1/2">
                                 <FormLabel>Urgency</FormLabel>
                                 <FormControl>
                                     <Select {...field}
-                                            onValueChange={(e) => newTicketForm.setValue("urgency", e)}>
+                                            onValueChange={(e) => updateTicketForm.setValue("urgency", e)}>
                                         <SelectTrigger>
                                             <SelectValue placeholder="Select urgency" />
                                         </SelectTrigger>
@@ -230,14 +265,14 @@ export default function NewTicketForm({projects, resources}: { projects: Project
                         )}>
                     </FormField>
                     <FormField
-                        control={newTicketForm.control}
+                        control={updateTicketForm.control}
                         name="priority"
                         render={({ field }) => (
                             <FormItem className="md:w-1/2">
                                 <FormLabel>Priority</FormLabel>
                                 <FormControl>
                                     <Select {...field} defaultValue={field.value}
-                                            onValueChange={(e) => newTicketForm.setValue("priority", e)}>
+                                            onValueChange={(e) => updateTicketForm.setValue("priority", e)}>
                                         <SelectTrigger>
                                             <SelectValue placeholder="Select priority" />
                                         </SelectTrigger>
@@ -257,14 +292,14 @@ export default function NewTicketForm({projects, resources}: { projects: Project
                     </FormField>
 
                     <FormField
-                        control={newTicketForm.control}
+                        control={updateTicketForm.control}
                         name="assignedTo"
                         render={({ field }) => (
                             <FormItem className="md:w-1/2">
                                 <FormLabel>Assigned To</FormLabel>
                                 <FormControl>
                                     <Select {...field} 
-                                            onValueChange={(e) => newTicketForm.setValue("assignedTo", e)}>
+                                            onValueChange={(e) => updateTicketForm.setValue("assignedTo", e)}>
                                         <SelectTrigger className="w-full">
                                             <SelectValue placeholder="Unassigned" />
                                         </SelectTrigger>
@@ -285,14 +320,14 @@ export default function NewTicketForm({projects, resources}: { projects: Project
                     </FormField>
 
                     <FormField
-                        control={newTicketForm.control}
+                        control={updateTicketForm.control}
                         name="category"
                         render={({ field }) => (
                             <FormItem className="md:w-1/2">
                                 <FormLabel>Category</FormLabel>
                                 <FormControl>
                                     <Select {...field} defaultValue={field.value}
-                                            onValueChange={(e) => newTicketForm.setValue("category", e)}>
+                                            onValueChange={(e) => updateTicketForm.setValue("category", e)}>
                                         <SelectTrigger>
                                             <SelectValue placeholder="Select category" />
                                         </SelectTrigger>
@@ -311,7 +346,7 @@ export default function NewTicketForm({projects, resources}: { projects: Project
                     </FormField>
                 </div>
                 <FormField
-                    control={newTicketForm.control}
+                    control={updateTicketForm.control}
                     name="shortDescription"
                     render={({ field }) => (
                         <FormItem className="w-full">
@@ -327,7 +362,7 @@ export default function NewTicketForm({projects, resources}: { projects: Project
                 </FormField>
                 
                 <FormField
-                    control={newTicketForm.control}
+                    control={updateTicketForm.control}
                     name="description"
                     render={({ field }) => (
                         <FormItem className="w-full">
@@ -341,6 +376,87 @@ export default function NewTicketForm({projects, resources}: { projects: Project
                         </FormItem>
                     )}>
                 </FormField>
+
+                <Tabs>
+                    <TabsList>
+                        <TabsTrigger value="notes">Notes</TabsTrigger>
+                        <TabsTrigger value="attachments">Attachments</TabsTrigger>
+                        <TabsTrigger value="resolution">Resolution</TabsTrigger>
+                    </TabsList>
+                    <TabsContent value="notes" defaultValue={"notes"}>
+                        <div className="space-y-4">
+                            <h3 className="text-lg font-semibold">Notes</h3>
+                            <FormField
+                                control={updateTicketForm.control}
+                                name="notes"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormControl>
+                                            <div>
+                                                {/* <Textarea
+                                                    value={newNote}
+                                                    onChange={(e) => setNewNote(e.target.value)}
+                                                    placeholder="Add a note..."
+                                                    className="resize-none"
+                                                    key={"note-textarea"}
+                                                /> */}
+                                                <RichtextEditor onChange={(editorState) => {
+                                                    console.log("Editor state changed", editorState);
+                                                }} />
+                                                <Button type="button" className="mt-2" onClick={() => {
+                                                    if (newNote.trim() === "") return;
+                                                    const notes = field.value || [];
+                                                    notes.push({
+                                                        user: userId,
+                                                        content: newNote,
+                                                        createdAt: new Date().toISOString(),
+                                                        updatedAt: new Date().toISOString()
+                                                    });
+                                                    field.onChange(notes);
+                                                    setNewNote("");
+                                                }
+                                                }>Add Note</Button>
+                                            </div>
+                                        </FormControl>
+                                    </FormItem>
+                                )}>
+                            </FormField>
+                            {updateTicketForm.getValues("notes")?.map((note, index) => {
+                                const user = resources.find(r => r._id === note.user);
+                                const displayName = user ? `${user.firstName} ${user.lastName}` : "Unknown User";
+                                return (
+                                    <div key={index} className="p-4 border rounded-md">
+                                        <p><strong>{displayName}</strong> - {new Date(note.createdAt).toLocaleString()}</p>
+                                        <p>{note.content}</p>
+                                    </div>
+                                )
+                            })}
+                        </div>
+                    </TabsContent>
+                    <TabsContent value="attachments">
+                        <div className="space-y-4">
+                            <h3 className="text-lg font-semibold">Attachments</h3>
+                            <p>Attachments functionality is not implemented yet.</p>
+                        </div>
+                    </TabsContent>
+                    <TabsContent value="resolution">
+                        <FormField
+                            control={updateTicketForm.control}
+                            name="resolutionInformation.resolutionSummary"
+                            render={({ field }) => (
+                                <FormItem className="w-full">
+                                    <FormLabel>Resolution Summary</FormLabel>
+                                    <FormControl>
+                                        <Textarea {...field} />
+                                    </FormControl>
+                                    <FormDescription className={errors?.resolutionInformation?.resolutionSummary?.message ? "text-destructive" : ""}>
+                                        { errors?.resolutionInformation?.resolutionSummary?.message ? errors.resolutionInformation.resolutionSummary.message : null }
+                                    </FormDescription>
+                                </FormItem>
+                            )}>
+                        </FormField>
+                    </TabsContent>
+                </Tabs>
             </form>
         </Form>
     )
