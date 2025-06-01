@@ -15,21 +15,25 @@ export interface Ticket extends mongoose.Document {
     category: string;
     shortDescription: string;
     description: string;
-    notes: {
-        user: string;
-        content: string;
-        createdAt: Date;
-        updatedAt: Date;
-    }[];
-    attachments: {
-        id: string;
-        filename: string;
-        url: string;
-        createdAt: Date;
-    }[];
+    notes: Note[];
+    attachments: Attachment[];
     resolutionInformation: {
         resolutionSummary: string;
     };
+}
+
+export interface Note extends mongoose.Document {
+    user: string;
+    content: string;
+    createdAt: Date;
+    updatedAt: Date;
+}
+
+export interface Attachment extends mongoose.Document {
+    id: string;
+    filename: string;
+    url: string;
+    createdAt: Date;
 }
 
 const ticketSchema = new mongoose.Schema<Ticket>({
@@ -130,7 +134,6 @@ const ticketSchema = new mongoose.Schema<Ticket>({
     resolutionInformation: {
         resolutionSummary: {
             type: String,
-            required: true,
             minlength: 1
         }
     }

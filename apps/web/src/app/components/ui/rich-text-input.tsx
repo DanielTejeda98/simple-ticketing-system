@@ -5,7 +5,7 @@ import { ContentEditable } from '@lexical/react/LexicalContentEditable';
 import { HistoryPlugin } from '@lexical/react/LexicalHistoryPlugin';
 import { LexicalErrorBoundary } from '@lexical/react/LexicalErrorBoundary';
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
-import { useEffect, useState } from 'react';
+import { ReactNode, useEffect, useState } from 'react';
 import LexicalEditorToolbar, { ToolbarContext } from './lexical-editor-toolbar';
 
 const editorTheme = {
@@ -62,17 +62,21 @@ function MyOnChangePlugin({ onChange }: { onChange: (editorState: any) => void }
     return null;
 }
 
-function Editor({ onChange }: { onChange: (editorState: any) => void }) {
+export function RichTextEditor({ onChange, editable }: { onChange: (editorState: any) => void, editable: boolean }) {
     const [editor] = useLexicalComposerContext();
     const [activeEditor, setActiveEditor] = useState(editor);
     const [isLinkEditMode, setIsLinkEditMode] = useState<boolean>(false);
 
+    useEffect(() => {
+        editor.setEditable(editable);
+    }, [editable, editor])
+
     return (
         <div className='my-5 border-2 text-black relative leading-[20px] rounded-t-md'>
-            <LexicalEditorToolbar editor={editor}
+            {editor.isEditable() ? (<LexicalEditorToolbar editor={editor}
                 activeEditor={activeEditor}
                 setActiveEditor={setActiveEditor}
-                setIsLinkEditMode={setIsLinkEditMode} />
+                setIsLinkEditMode={setIsLinkEditMode} />) : null}
             <div className='relative'>
                 <RichTextPlugin
                     contentEditable={
@@ -92,17 +96,19 @@ function Editor({ onChange }: { onChange: (editorState: any) => void }) {
     )
 }
 
-export default function RichtextEditor({ onChange }: { onChange: (editorState: any) => void }) {
+export function LexicalComposerProvider({ children, editable = true, content }: { children: ReactNode, editable?: boolean, content?: string }) {
     const initialConfig = {
         namespace: 'richtext',
         theme: editorTheme,
+        editorState: content,
+        editable,
         onError
     }
 
     return (
         <LexicalComposer initialConfig={initialConfig}>
             <ToolbarContext>
-                <Editor onChange={onChange} />
+                {children}
             </ToolbarContext>
         </LexicalComposer>
     )

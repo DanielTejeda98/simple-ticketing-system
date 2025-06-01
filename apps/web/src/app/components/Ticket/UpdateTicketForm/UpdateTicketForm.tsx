@@ -16,10 +16,9 @@ import { Project } from "@/app/models/projectModel";
 import { CreateTicketAction } from "@/app/server-actions/CreateTicket";
 import { Button } from "../../ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../../ui/tabs";
-import { useState } from "react";
 import { useSession } from "next-auth/react";
 import { Ticket } from "@/app/models/ticketModel";
-import RichtextEditor from "../../ui/rich-text-input";
+import Notes from "./Notes";
 
 export default function UpdateTicketForm({ticket, projects, resources}: { ticket: Ticket, projects: Project[], resources: UserModel[]}) {
     const { data } = useSession();
@@ -54,7 +53,6 @@ export default function UpdateTicketForm({ticket, projects, resources}: { ticket
             }
         }
     })
-    const [newNote, setNewNote] = useState("");
 
     async function onSubmit(values: z.infer<typeof UpdateTicketFormSchema>) {
             // When successful, it will redirect the user, on error, it will return an error
@@ -384,54 +382,7 @@ export default function UpdateTicketForm({ticket, projects, resources}: { ticket
                         <TabsTrigger value="resolution">Resolution</TabsTrigger>
                     </TabsList>
                     <TabsContent value="notes" defaultValue={"notes"}>
-                        <div className="space-y-4">
-                            <h3 className="text-lg font-semibold">Notes</h3>
-                            <FormField
-                                control={updateTicketForm.control}
-                                name="notes"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormControl>
-                                            <div>
-                                                {/* <Textarea
-                                                    value={newNote}
-                                                    onChange={(e) => setNewNote(e.target.value)}
-                                                    placeholder="Add a note..."
-                                                    className="resize-none"
-                                                    key={"note-textarea"}
-                                                /> */}
-                                                <RichtextEditor onChange={(editorState) => {
-                                                    console.log("Editor state changed", editorState);
-                                                }} />
-                                                <Button type="button" className="mt-2" onClick={() => {
-                                                    if (newNote.trim() === "") return;
-                                                    const notes = field.value || [];
-                                                    notes.push({
-                                                        user: userId,
-                                                        content: newNote,
-                                                        createdAt: new Date().toISOString(),
-                                                        updatedAt: new Date().toISOString()
-                                                    });
-                                                    field.onChange(notes);
-                                                    setNewNote("");
-                                                }
-                                                }>Add Note</Button>
-                                            </div>
-                                        </FormControl>
-                                    </FormItem>
-                                )}>
-                            </FormField>
-                            {updateTicketForm.getValues("notes")?.map((note, index) => {
-                                const user = resources.find(r => r._id === note.user);
-                                const displayName = user ? `${user.firstName} ${user.lastName}` : "Unknown User";
-                                return (
-                                    <div key={index} className="p-4 border rounded-md">
-                                        <p><strong>{displayName}</strong> - {new Date(note.createdAt).toLocaleString()}</p>
-                                        <p>{note.content}</p>
-                                    </div>
-                                )
-                            })}
-                        </div>
+                        <Notes formNotes={updateTicketForm.getValues("notes") || []} userId={userId} resources={resources} ticketId={ticket._id as string} />
                     </TabsContent>
                     <TabsContent value="attachments">
                         <div className="space-y-4">
