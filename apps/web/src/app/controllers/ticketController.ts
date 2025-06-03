@@ -117,7 +117,7 @@ export const createNote = async (ticketId: string, userId: string, note: NoteUiM
     }
 }
 
-export const updateNote = async (noteId: string, ticketId: string, userId: string, note: Note) => {
+export const updateNote = async (noteId: string, ticketId: string, userId: string, note: NoteUiModel) => {
     try {
         await dbConnect();
 
@@ -138,12 +138,12 @@ export const updateNote = async (noteId: string, ticketId: string, userId: strin
 
         const userCanAccessProject = (ticket.project as Project).members.includes(userId) || await checkAnyAbilityServer(userId, "read-any", "projects")
 
-        if (userCanAccessProject) {
+        if (!userCanAccessProject) {
             throw new Error(`User does not have access for this action`);
         }
 
-        const storedNote = ticket.notes.find(note => note._id === noteId);
-
+        const storedNote = ticket.notes.find(note => (note._id as mongoose.Types.ObjectId).toString() === noteId);
+        
         if (!storedNote || storedNote.user != userId) {
             throw new Error(`Unable to update comment.`);
         }
@@ -152,6 +152,8 @@ export const updateNote = async (noteId: string, ticketId: string, userId: strin
         storedNote.updatedAt = new Date();
 
         await ticket.save();
+
+        return ticket.notes;
     } catch (error) {
         throw error;
     }
@@ -178,12 +180,11 @@ export const deleteNote = async (noteId: string, ticketId: string, userId: strin
 
         const userCanAccessProject = (ticket.project as Project).members.includes(userId) || await checkAnyAbilityServer(userId, "read-any", "projects")
 
-        if (userCanAccessProject) {
+        if (!userCanAccessProject) {
             throw new Error(`User does not have access for this action`);
         }
 
-        const storedNote = ticket.notes.find(note => note._id === noteId);
-
+        const storedNote = ticket.notes.find(note => (note._id as mongoose.Types.ObjectId).toString() === noteId);
         if (!storedNote || storedNote.user != userId) {
             throw new Error(`Unable to delete comment.`);
         }
@@ -192,9 +193,13 @@ export const deleteNote = async (noteId: string, ticketId: string, userId: strin
             $pull: {
                 notes: storedNote
             }
-        })
+        });
 
         await ticket.save();
+
+        // The removal was successful - but we do not see the update on the ticket object
+        // So we manually remove the note and send back an array with the note deleted for the UI to update
+        return ticket.notes.filter(note => note._id != storedNote._id);
     } catch (error) {
         throw error;
     }

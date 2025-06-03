@@ -73,7 +73,7 @@ export function RichTextEditor({ onChange, editable }: { onChange: (editorState:
 
     return (
         <div className='my-5 border-2 text-black relative leading-[20px] rounded-t-md'>
-            {editor.isEditable() ? (<LexicalEditorToolbar editor={editor}
+            {editable ? (<LexicalEditorToolbar editor={editor}
                 activeEditor={activeEditor}
                 setActiveEditor={setActiveEditor}
                 setIsLinkEditMode={setIsLinkEditMode} />) : null}
