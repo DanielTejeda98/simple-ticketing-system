@@ -1,3 +1,5 @@
+"use client"
+
 import { AutoFocusPlugin } from '@lexical/react/LexicalAutoFocusPlugin';
 import { LexicalComposer } from '@lexical/react/LexicalComposer';
 import { RichTextPlugin } from '@lexical/react/LexicalRichTextPlugin';
@@ -5,8 +7,12 @@ import { ContentEditable } from '@lexical/react/LexicalContentEditable';
 import { HistoryPlugin } from '@lexical/react/LexicalHistoryPlugin';
 import { LexicalErrorBoundary } from '@lexical/react/LexicalErrorBoundary';
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
+
 import { ReactNode, useEffect, useState } from 'react';
 import LexicalEditorToolbar, { ToolbarContext } from './lexical-editor-toolbar';
+import InlineImagePlugin from '@/app/lexical/plugin/InlineImagePlugin';
+import { InlineImageNode } from '@/app/lexical/nodes/InlineImageNode';
+import DragDropPaste from '@/app/lexical/plugin/DragDropPastePlugin';
 
 const editorTheme = {
     code: 'bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100',
@@ -91,6 +97,8 @@ export function RichTextEditor({ onChange, editable }: { onChange: (editorState:
                 <MyOnChangePlugin onChange={onChange} />
                 <HistoryPlugin />
                 <AutoFocusPlugin />
+                <InlineImagePlugin />
+                <DragDropPaste />
             </div>
         </div>
     )
@@ -101,6 +109,7 @@ export function LexicalComposerProvider({ children, editable = true, content }: 
         namespace: 'richtext',
         theme: editorTheme,
         editorState: content,
+        nodes: [InlineImageNode],
         editable,
         onError
     }

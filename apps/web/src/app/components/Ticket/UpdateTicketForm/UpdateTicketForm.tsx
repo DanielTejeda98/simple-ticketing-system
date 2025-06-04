@@ -375,13 +375,13 @@ export default function UpdateTicketForm({ticket, projects, resources}: { ticket
                     )}>
                 </FormField>
 
-                <Tabs>
+                <Tabs defaultValue={"notes"}>
                     <TabsList>
                         <TabsTrigger value="notes">Notes</TabsTrigger>
                         <TabsTrigger value="attachments">Attachments</TabsTrigger>
                         <TabsTrigger value="resolution">Resolution</TabsTrigger>
                     </TabsList>
-                    <TabsContent value="notes" defaultValue={"notes"}>
+                    <TabsContent value="notes">
                         <Notes formNotes={updateTicketForm.getValues("notes") || []} userId={userId} resources={resources} ticketId={ticket._id as string} />
                     </TabsContent>
                     <TabsContent value="attachments">
