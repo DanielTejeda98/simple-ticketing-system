@@ -8,6 +8,52 @@ import ticketModel, { Note, Ticket } from "../models/ticketModel";
 import { Note as NoteUiModel } from "../components/Ticket/UpdateTicketForm/UpdateTicketSchema";
 import mongoose from "mongoose";
 import userModel from "../models/userModel";
+import { checkAuthAndGetUserId } from "../utils/serverHelpers";
+import { getAllProjectIds } from "./projectController";
+
+export const getAllTickets = async () => {
+    try {
+        const userId = await checkAuthAndGetUserId();
+
+        await dbConnect();
+        
+        if(!checkAbilityServer(userId, "read-any", "read", "tickets")) {
+            throw new Error("User does not have permissions for this action!");
+        }
+        // It is easier to do this as two queries - than to maintain a massive aggregate query
+        const projectsAvailable = await getAllProjectIds();
+
+        if (!projectsAvailable || !projectsAvailable.length) {
+            return [];
+        }
+
+        const tickets = await ticketModel.find({
+            project: {
+                $in: projectsAvailable
+            }
+        }).populate({
+            path: "project",
+            model: projectModel,
+            select: "name"
+        }).populate({
+            path: 'caller',
+            model: userModel,
+            select: 'firstName lastName avatar'
+        }).populate({
+            path: 'assignedTo',
+            model: userModel,
+            select: 'firstName lastName avatar'
+        })
+
+        if (!tickets || !tickets.length) {
+            return [];
+        }
+
+        return tickets;
+    } catch (error) {
+        throw error;
+    }
+}
 
 export const createTicket = async (ticket: z.infer<typeof NewTicketFormSchema>, creator: string) => {
     try {

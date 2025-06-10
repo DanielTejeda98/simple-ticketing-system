@@ -20,6 +20,8 @@ export interface Ticket extends mongoose.Document {
     resolutionInformation: {
         resolutionSummary: string;
     };
+    createdAt: Date;
+    updatedAt?: Date;
 }
 
 export interface Note extends mongoose.Document {
@@ -136,6 +138,14 @@ const ticketSchema = new mongoose.Schema<Ticket>({
             type: String,
             minlength: 1
         }
+    },
+    createdAt: {
+        type: Date,
+        default: Date.now
+    },
+    updatedAt: {
+        type: Date,
+        default: null
     }
 })
 

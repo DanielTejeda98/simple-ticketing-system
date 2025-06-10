@@ -12,7 +12,7 @@ import ProjectAssignedEmailTemplate from "../emails/projectAssigned";
 import userModel from "../models/userModel";
 import { checkAbilityServer, checkAnyAbilityServer } from "../utils/checkAbilityServer";
 import { authOptions } from "../config/authOptions";
-import { getServerSession } from "next-auth";
+import { checkAuthAndGetUserId } from "../utils/serverHelpers";
 
 export const createProject = async (project: z.infer<typeof NewProjectFormSchema>, creator: string) => {
     try {
@@ -132,6 +132,26 @@ export const getAllProjects = async (includeArchived?: boolean): Promise<Project
     }
 }
 
+export const getAllProjectIds = async (includeArchived?: boolean): Promise<Project[]> => {
+    try {
+        const userId = await checkAuthAndGetUserId();
+        const readAny = await checkProjectAnyAbility(userId);
+        
+        await dbConnect();
+
+        const findQuery = {
+            $and: [
+                {...!includeArchived ? { archived: false } : {}},
+                {...!readAny ? {members: { $in: [userId]}} : {}}
+            ]
+        }
+            
+        return await projectModel.find(findQuery).select("_id").exec()
+    } catch (error) {
+        throw error;
+    }
+}
+
 export const getAllArchivedProjects = async (): Promise<Project[]> => {
     try {
         const userId = await checkAuthAndGetUserId();
@@ -188,15 +208,6 @@ const sendResourceLeadChangeNotification = async (resourceLead: string, project:
         throw error;
     }
     
-}
-
-const checkAuthAndGetUserId = async () => {
-    const session = await getServerSession(authOptions);
-    if (!session) {
-        throw new Error("Must be signed in for this action");
-    }
-
-    return session.user.id;
 }
 
 const checkProjectAnyAbility = async (userId: string) => {
