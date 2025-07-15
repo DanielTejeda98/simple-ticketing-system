@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 const NewTicketFormSchema = z.object({
-    number: z.string().min(1),
+    type: z.string(),
     caller: z.string().min(1),
     project: z.string().min(1),
     category: z.string().min(1),

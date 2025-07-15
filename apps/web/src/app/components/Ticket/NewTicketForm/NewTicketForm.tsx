@@ -15,8 +15,10 @@ import { User as UserModel } from "@/app/models/userModel";
 import { Project } from "@/app/models/projectModel";
 import { CreateTicketAction } from "@/app/server-actions/CreateTicket";
 import { Button } from "../../ui/button";
+import { TicketType } from "@/app/models/ticketTypeModel";
+import { ContactType, TicketImpact, TicketPriority, TicketState, TicketUrgency } from "@/app/models/ticketModel";
 
-export default function NewTicketForm({projects, resources}: { projects: Project[], resources: UserModel[]}) {
+export default function NewTicketForm({projects, resources, ticketTypes}: { projects: Project[], resources: UserModel[], ticketTypes: TicketType[]}) {
     const newTicketForm = useForm<z.infer<typeof NewTicketFormSchema>>({
         resolver: zodResolver(NewTicketFormSchema)
     })
@@ -53,15 +55,28 @@ export default function NewTicketForm({projects, resources}: { projects: Project
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-1">
                     <FormField
                         control={newTicketForm.control}
-                        name="number"
+                        name="type"
                         render={({ field }) => (
                             <FormItem className="md:w-1/2">
-                                <FormLabel>Ticket Number</FormLabel>
+                                <FormLabel>Ticket Type</FormLabel>
                                 <FormControl>
-                                    <Input {...field} />
+                                    <Select {...field}
+                                            defaultValue={ticketTypes.length === 1 ? (projects[0]._id as mongoose.Types.ObjectId).toString() : ""}
+                                            onValueChange={(e) => newTicketForm.setValue("type", e)}>
+                                        <SelectTrigger className="w-full">
+                                            <SelectValue placeholder="Select type..." />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            { ticketTypes.map(type => (
+                                                <SelectItem value={(type._id as mongoose.Types.ObjectId).toString()} key={(type._id as mongoose.Types.ObjectId).toString()}>
+                                                    { type.name }
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
                                 </FormControl>
-                                <FormDescription className={errors?.number?.message ? "text-destructive" : ""}>
-                                    { errors.number?.message ? errors.number?.message : null }
+                                <FormDescription className={errors?.project?.message ? "text-destructive" : ""}>
+                                    { errors.project?.message ? errors.project?.message : null }
                                 </FormDescription>
                             </FormItem>
                         )}>
@@ -132,7 +147,7 @@ export default function NewTicketForm({projects, resources}: { projects: Project
                                 <FormLabel>Contact Type</FormLabel>
                                 <FormControl>
                                     <Select {...field} defaultValue={field.value}
-                                            onValueChange={(e) => newTicketForm.setValue("contactType", e)}>
+                                            onValueChange={(e) => newTicketForm.setValue("contactType", e as ContactType)}>
                                         <SelectTrigger>
                                             <SelectValue placeholder="Select contact type" />
                                         </SelectTrigger>
@@ -158,7 +173,7 @@ export default function NewTicketForm({projects, resources}: { projects: Project
                                 <FormLabel>State</FormLabel>
                                 <FormControl>
                                     <Select {...field} defaultValue={"new"}
-                                            onValueChange={(e) => newTicketForm.setValue("state", e)}>
+                                            onValueChange={(e) => newTicketForm.setValue("state", e as TicketState)}>
                                         <SelectTrigger>
                                             <SelectValue placeholder="Select state" />
                                         </SelectTrigger>
@@ -185,7 +200,7 @@ export default function NewTicketForm({projects, resources}: { projects: Project
                                 <FormLabel>Impact</FormLabel>
                                 <FormControl>
                                     <Select {...field} defaultValue={field.value}
-                                            onValueChange={(e) => newTicketForm.setValue("impact", e)}>
+                                            onValueChange={(e) => newTicketForm.setValue("impact", e as TicketImpact)}>
                                         <SelectTrigger>
                                             <SelectValue placeholder="Select impact" />
                                         </SelectTrigger>
@@ -211,7 +226,7 @@ export default function NewTicketForm({projects, resources}: { projects: Project
                                 <FormLabel>Urgency</FormLabel>
                                 <FormControl>
                                     <Select {...field}
-                                            onValueChange={(e) => newTicketForm.setValue("urgency", e)}>
+                                            onValueChange={(e) => newTicketForm.setValue("urgency", e as TicketUrgency)}>
                                         <SelectTrigger>
                                             <SelectValue placeholder="Select urgency" />
                                         </SelectTrigger>
@@ -237,7 +252,7 @@ export default function NewTicketForm({projects, resources}: { projects: Project
                                 <FormLabel>Priority</FormLabel>
                                 <FormControl>
                                     <Select {...field} defaultValue={field.value}
-                                            onValueChange={(e) => newTicketForm.setValue("priority", e)}>
+                                            onValueChange={(e) => newTicketForm.setValue("priority", e as TicketPriority)}>
                                         <SelectTrigger>
                                             <SelectValue placeholder="Select priority" />
                                         </SelectTrigger>

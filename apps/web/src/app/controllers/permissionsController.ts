@@ -6,11 +6,12 @@ import mongoose from "mongoose";
 import createLogEvent, { LOGGER_EVENTS } from "../lib/logger";
 import userModel from "../models/userModel";
 import { checkAbilityServer } from "../utils/checkAbilityServer";
+import { conditions } from "../lib/appAbility";
 
 export const createPermission = async (newPermission: z.infer<typeof RoleFormSchema>) => {
     const { name, creator, updator, ...permissions} = newPermission;
 
-    if(!checkAbilityServer(creator!, "update-any", "update", "permissions")) {
+    if(!checkAbilityServer("update-any", "update", "permissions")) {
         throw new Error("User does not have permissions for this action!")
     }
 
@@ -35,9 +36,10 @@ export const createPermission = async (newPermission: z.infer<typeof RoleFormSch
 }
 
 export const updatePermission = async (id: string, newPermission: z.infer<typeof RoleFormSchema>) => {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { name, creator, updator, ...permissions} = newPermission;
 
-    if(!checkAbilityServer(updator!, "update-any", "update", "permissions")) {
+    if(!checkAbilityServer("update-any", "update", "permissions")) {
         throw new Error("User does not have permissions for this action!")
     }
 
@@ -64,7 +66,7 @@ export const deletePermission = async (id: string, user: string) => {
     try {
         await dbConnect();
 
-        if(!checkAbilityServer(user, "delete-any", "delete", "permissions")) {
+        if(!checkAbilityServer("delete-any", "delete", "permissions")) {
             throw new Error("User does not have permissions for this action!")
         }
 
@@ -116,7 +118,7 @@ export const getPermission = async (id: string): Promise<Permissions|null> => {
 }
 
 const convertPermissionFormToRawRules = (permissions: { [x: string]: { [x: string]: string | boolean }; }) => {
-    const permissionsArray: { action: string, subject: string}[] = [] as { action: string, subject: string}[];
+    const permissionsArray: { action: string, subject: string, conditions?: unknown}[] = [] as { action: string, subject: string, conditions?: unknown}[];
     
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore
@@ -127,7 +129,15 @@ const convertPermissionFormToRawRules = (permissions: { [x: string]: { [x: strin
             // eslint-disable-next-line @typescript-eslint/ban-ts-comment
             // @ts-ignore
             if (permissions[key][action]) {
-                permissionsArray.push({action, subject: key});
+                const rule = {action, subject: key} as { action: string, subject: string, conditions?: unknown}
+                if (!action.includes("any")) {
+                    // Check if we have a condition for this action
+                    const _conditions = conditions[key as keyof typeof conditions];
+                    if (_conditions && _conditions[action as keyof typeof _conditions]) {
+                        rule.conditions = _conditions[action as keyof typeof _conditions];
+                    }
+                }
+                permissionsArray.push(rule);
             }
 
         })

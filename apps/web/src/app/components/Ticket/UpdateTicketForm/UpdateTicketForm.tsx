@@ -17,25 +17,27 @@ import { CreateTicketAction } from "@/app/server-actions/CreateTicket";
 import { Button } from "../../ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../../ui/tabs";
 import { useSession } from "next-auth/react";
-import { Ticket } from "@/app/models/ticketModel";
+import { ContactType, Ticket, TicketImpact, TicketPriority, TicketState, TicketUrgency } from "@/app/models/ticketModel";
 import Notes from "./Notes";
+import { TicketType } from "@/app/models/ticketTypeModel";
+import formatTicketNumber from "@/app/utils/formatTicketNumber";
 
-export default function UpdateTicketForm({ticket, projects, resources}: { ticket: Ticket, projects: Project[], resources: UserModel[]}) {
+export default function UpdateTicketForm({ticket, projects, resources, ticketTypes}: { ticket: Ticket, projects: Project[], resources: UserModel[], ticketTypes: TicketType[]}) {
     const { data } = useSession();
     const userId = (data && data.user.id!) || "";
     
     const updateTicketForm = useForm<z.infer<typeof UpdateTicketFormSchema>>({
         resolver: zodResolver(UpdateTicketFormSchema),
         defaultValues: {
-            number: ticket.number,
-            project: (ticket.project as Project)._id.toString(),
-            caller: ticket.caller ? (ticket.caller as UserModel)._id.toString() : "",
+            type: ((ticket.type as TicketType)._id as string).toString(),
+            project: ((ticket.project as Project)._id as string).toString(),
+            caller: ticket.caller ? ((ticket.caller as UserModel)._id as string).toString() : "",
             contactType: ticket.contactType,
             state: ticket.state,
             impact: ticket.impact,
             urgency: ticket.urgency,
             priority: ticket.priority,
-            assignedTo: ticket.assignedTo ? (ticket.assignedTo as UserModel)._id.toString() : "",
+            assignedTo: ticket.assignedTo ? ((ticket.assignedTo as UserModel)._id as string).toString() : "",
             category: ticket.category,
             shortDescription: ticket.shortDescription,
             description: ticket.description,
@@ -72,7 +74,7 @@ export default function UpdateTicketForm({ticket, projects, resources}: { ticket
         <Form {...updateTicketForm}>
             <form onSubmit={updateTicketForm.handleSubmit(onSubmit)} className="space-y-8">
                 <div className="flex gap-2 mt-8">
-                    <Button type="submit" className="w-fit">Update ticket</Button>
+                    <Button type="submit" className="w-fit">Update ticket {formatTicketNumber(ticket.number, (ticket.type as TicketType))}</Button>
                 </div>
                 { errors?.root?.message ? (
                     <Alert variant={"destructive"}>
@@ -86,15 +88,28 @@ export default function UpdateTicketForm({ticket, projects, resources}: { ticket
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-1">
                     <FormField
                         control={updateTicketForm.control}
-                        name="number"
+                        name="type"
                         render={({ field }) => (
                             <FormItem className="md:w-1/2">
-                                <FormLabel>Ticket Number</FormLabel>
+                                <FormLabel>Ticket Type</FormLabel>
                                 <FormControl>
-                                    <Input {...field} />
+                                    <Select {...field}
+                                            defaultValue={ticketTypes.length === 1 ? (ticketTypes[0]._id as mongoose.Types.ObjectId).toString() : ""}
+                                            onValueChange={(e) => updateTicketForm.setValue("type", e)}>
+                                        <SelectTrigger className="w-full">
+                                            <SelectValue placeholder="Select type..." />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            { ticketTypes.map(type => (
+                                                <SelectItem value={(type._id as mongoose.Types.ObjectId).toString()} key={(type._id as mongoose.Types.ObjectId).toString()}>
+                                                    { type.name }
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
                                 </FormControl>
-                                <FormDescription className={errors?.number?.message ? "text-destructive" : ""}>
-                                    { errors.number?.message ? errors.number?.message : null }
+                                <FormDescription className={errors?.project?.message ? "text-destructive" : ""}>
+                                    { errors.project?.message ? errors.project?.message : null }
                                 </FormDescription>
                             </FormItem>
                         )}>
@@ -165,7 +180,7 @@ export default function UpdateTicketForm({ticket, projects, resources}: { ticket
                                 <FormLabel>Contact Type</FormLabel>
                                 <FormControl>
                                     <Select {...field} defaultValue={field.value}
-                                            onValueChange={(e) => updateTicketForm.setValue("contactType", e)}>
+                                            onValueChange={(e) => updateTicketForm.setValue("contactType", e as ContactType)}>
                                         <SelectTrigger>
                                             <SelectValue placeholder="Select contact type" />
                                         </SelectTrigger>
@@ -191,7 +206,7 @@ export default function UpdateTicketForm({ticket, projects, resources}: { ticket
                                 <FormLabel>State</FormLabel>
                                 <FormControl>
                                     <Select {...field} defaultValue={"new"}
-                                            onValueChange={(e) => updateTicketForm.setValue("state", e)}>
+                                            onValueChange={(e) => updateTicketForm.setValue("state", e as TicketState)}>
                                         <SelectTrigger>
                                             <SelectValue placeholder="Select state" />
                                         </SelectTrigger>
@@ -218,7 +233,7 @@ export default function UpdateTicketForm({ticket, projects, resources}: { ticket
                                 <FormLabel>Impact</FormLabel>
                                 <FormControl>
                                     <Select {...field} defaultValue={field.value}
-                                            onValueChange={(e) => updateTicketForm.setValue("impact", e)}>
+                                            onValueChange={(e) => updateTicketForm.setValue("impact", e as TicketImpact)}>
                                         <SelectTrigger>
                                             <SelectValue placeholder="Select impact" />
                                         </SelectTrigger>
@@ -244,7 +259,7 @@ export default function UpdateTicketForm({ticket, projects, resources}: { ticket
                                 <FormLabel>Urgency</FormLabel>
                                 <FormControl>
                                     <Select {...field}
-                                            onValueChange={(e) => updateTicketForm.setValue("urgency", e)}>
+                                            onValueChange={(e) => updateTicketForm.setValue("urgency", e as TicketUrgency)}>
                                         <SelectTrigger>
                                             <SelectValue placeholder="Select urgency" />
                                         </SelectTrigger>
@@ -270,7 +285,7 @@ export default function UpdateTicketForm({ticket, projects, resources}: { ticket
                                 <FormLabel>Priority</FormLabel>
                                 <FormControl>
                                     <Select {...field} defaultValue={field.value}
-                                            onValueChange={(e) => updateTicketForm.setValue("priority", e)}>
+                                            onValueChange={(e) => updateTicketForm.setValue("priority", e as TicketPriority)}>
                                         <SelectTrigger>
                                             <SelectValue placeholder="Select priority" />
                                         </SelectTrigger>

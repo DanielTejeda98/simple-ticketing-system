@@ -126,7 +126,7 @@ export default function Dashboard () {
                             <CardDescription>Manage system settings</CardDescription>
                         </CardContent>
                         <CardFooter>
-                            <Button type="button">System Settings</Button>
+                            <Link href={"/system"}><Button type="button">System Settings</Button></Link>
                         </CardFooter>
                     </Card>
                 </ShowWhen>

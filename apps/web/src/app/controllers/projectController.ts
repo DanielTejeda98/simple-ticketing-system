@@ -6,19 +6,24 @@ import projectModel, { Project } from "../models/projectModel";
 import slugify from "../utils/slugify";
 import ProjectFormSchema from "../components/Projects/ProjectForm/ProjectFormSchema";
 import mongoose from "mongoose";
-import { getUsers } from "./userController";
+import { getUserPermissions, getUsers } from "./userController";
 import { sendMail } from "../lib/mailer";
 import ProjectAssignedEmailTemplate from "../emails/projectAssigned";
 import userModel from "../models/userModel";
-import { checkAbilityServer, checkAnyAbilityServer } from "../utils/checkAbilityServer";
 import { authOptions } from "../config/authOptions";
 import { getServerSession } from "next-auth";
+import { accessibleBy } from "@casl/mongoose";
+import { createAbility } from "../lib/appAbility";
+import { checkAbility } from "../utils/checkAbility";
 
 export const createProject = async (project: z.infer<typeof NewProjectFormSchema>, creator: string) => {
     try {
         await dbConnect();
+        
+        await checkAuthAndGetUserId();
+        const ability = createAbility(await getUserPermissions());
 
-        if(!checkAbilityServer(creator, "create-any", "create", "projects")) {
+        if (!checkAbility(ability, "create-any", "create", "projects")) {
             throw new Error("User does not have permissions for this action!");
         }
 
@@ -50,7 +55,10 @@ export const updateProject = async (project: z.infer<typeof ProjectFormSchema>) 
     try {
         await dbConnect();
 
-        if(!checkAbilityServer(project.updater, "update-any", "update", "projects")) {
+        await checkAuthAndGetUserId();
+        const ability = createAbility(await getUserPermissions());
+
+        if (!checkAbility(ability, "update-any", "update", "projects")) {
             throw new Error("User does not have permissions for this action!");
         }
 
@@ -89,12 +97,15 @@ export const updateProject = async (project: z.infer<typeof ProjectFormSchema>) 
 }
 
 export const archiveProject = async (projectSlug: string, archiver: string) => {
-
-    if(!checkAbilityServer(archiver, "delete-any", "delete", "projects")) {
-        throw new Error("User does not have permissions for this action!");
-    }
-
     try {
+        await dbConnect();
+        await checkAuthAndGetUserId();
+        const ability = createAbility(await getUserPermissions());
+
+        if (!checkAbility(ability, "delete-any", "delete", "projects")) {
+            throw new Error("User does not have permissions for this action!");
+        }
+
         const retrievedProject = await getProject(projectSlug);
 
         if (!retrievedProject) throw new Error("No project found");
@@ -110,15 +121,22 @@ export const archiveProject = async (projectSlug: string, archiver: string) => {
 
 export const getAllProjects = async (includeArchived?: boolean): Promise<Project[]> => {
     try {
-        const userId = await checkAuthAndGetUserId();
-        const readAny = await checkProjectAnyAbility(userId);
-        
         await dbConnect();
+        
+        await checkAuthAndGetUserId();
+        const ability = createAbility(await getUserPermissions());
+
+        if (!checkAbility(ability, "read-any", "read", "projects")) {
+            throw new Error("User does not have permissions for this action!");
+        }
 
         const findQuery = {
             $and: [
-                {...!includeArchived ? { archived: false } : {}},
-                {...!readAny ? {members: { $in: [userId]}} : {}}
+                { $or: [
+                    accessibleBy(ability, "read").ofType("projects"),
+                    accessibleBy(ability, "read-any").ofType("projects")
+                ]},
+                {...!includeArchived ? { archived: false } : {}}
             ]
         }
             
@@ -134,14 +152,22 @@ export const getAllProjects = async (includeArchived?: boolean): Promise<Project
 
 export const getAllArchivedProjects = async (): Promise<Project[]> => {
     try {
-        const userId = await checkAuthAndGetUserId();
-        const readAny = await checkProjectAnyAbility(userId);
-        
         await dbConnect();
+        
+        await checkAuthAndGetUserId();
+        const ability = createAbility(await getUserPermissions());
+
+        if (!checkAbility(ability, "read-any", "read", "projects")) {
+            throw new Error("User does not have permissions for this action!");
+        }
+        
         const findQuery = {
             $and: [
-                { archived: true },
-                {...!readAny ? {members: { $in: [userId]}} : {}}
+                { $or: [
+                    accessibleBy(ability, "read").ofType("projects"),
+                    accessibleBy(ability, "read-any").ofType("projects")
+                ]},
+                { archived: true }
             ]
         }
             
@@ -155,12 +181,19 @@ export const getProject = async (projectSlug: string): Promise<Project | null> =
     try {
         await dbConnect();
 
-        const userId = await checkAuthAndGetUserId();
-        const readAny = await checkProjectAnyAbility(userId);
+        await checkAuthAndGetUserId();
+        const ability = createAbility(await getUserPermissions());
+
+        if (!checkAbility(ability, "read-any", "read", "projects")) {
+            throw new Error("User does not have permissions for this action!");
+        }
 
         return await projectModel.findOne({$and: [
-            { slug: projectSlug },
-            {...!readAny ? {members: { $in: [userId]}} : {}}
+            { $or: [
+                accessibleBy(ability, "read").ofType("projects"),
+                accessibleBy(ability, "read-any").ofType("projects")
+            ]},
+            { slug: projectSlug }
         ]})
     } catch (error) {
         throw error;
@@ -197,10 +230,6 @@ const checkAuthAndGetUserId = async () => {
     }
 
     return session.user.id;
-}
-
-const checkProjectAnyAbility = async (userId: string) => {
-    return await checkAnyAbilityServer(userId, "read-any", "projects");
 }
 
 const processProjectMembers = (updatedMembers: string[], lead?: mongoose.Types.ObjectId | null, owner?: mongoose.Types.ObjectId | null)

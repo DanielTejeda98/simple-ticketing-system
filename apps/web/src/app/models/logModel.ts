@@ -30,4 +30,8 @@ const LogSchema = new mongoose.Schema<Log>({
     }
 })
 
+//const session = await getServerSession(authOptions);
+//const rules = await getUserPermissions(user);
+//const ability = createAbility(rules);
+
 export default mongoose.models.Log || mongoose.model<Log>("Log", LogSchema);

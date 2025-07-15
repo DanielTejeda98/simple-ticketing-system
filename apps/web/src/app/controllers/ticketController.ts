@@ -8,34 +8,89 @@ import ticketModel, { Note, Ticket } from "../models/ticketModel";
 import { Note as NoteUiModel } from "../components/Ticket/UpdateTicketForm/UpdateTicketSchema";
 import mongoose from "mongoose";
 import userModel from "../models/userModel";
+import { createAbility } from "../lib/appAbility";
+import { getUserPermissions } from "./userController";
+import { accessibleBy } from "@casl/mongoose";
+import ticketTypeModel from "../models/ticketTypeModel";
+
+export const getAllTickets = async () => {
+    try {
+        await dbConnect();
+
+        if(!checkAbilityServer("read-any", "read", "tickets")) {
+            throw new Error("User does not have permissions for this action!");
+        }
+
+        const ability = createAbility(await getUserPermissions());
+
+        const projectsUserCanAccess = await projectModel.find({
+            $or: [
+                accessibleBy(ability, "read").ofType("projects"),
+                accessibleBy(ability, "read-any").ofType("projects")
+            ],
+            archived: false
+        }).select("_id").exec();
+
+        if (projectsUserCanAccess.length === 0) {
+            return [];
+        }
+
+        const projectIds = projectsUserCanAccess.map(project => project._id);
+
+        const tickets = await ticketModel.find({
+            project: { $in: projectIds }
+        }).populate({
+            model: projectModel,
+            path: "project",
+            select: "name"
+        }).populate({
+            model: userModel,
+            path: "caller",
+            select: "firstName lastName avatar"
+        }).populate({
+            model: userModel,
+            path: "assignedTo",
+            select: "firstName lastName avatar"
+        }).populate({
+            model: ticketTypeModel,
+            path: "type",
+            select: "identifier"
+        }).exec() as Ticket[];
+
+        return tickets;
+    } catch (error) {
+        throw error;
+    }
+}
 
 export const createTicket = async (ticket: z.infer<typeof NewTicketFormSchema>, creator: string) => {
     try {
         await dbConnect();
 
-        if(!checkAbilityServer(creator, "create-any", "create", "tickets")) {
+        if(!checkAbilityServer("create-any", "create", "tickets")) {
             throw new Error("User does not have permissions for this action!");
         }
-        
-        // Check if the user has access to read the project
-        const userAccessQuery = !await checkAnyAbilityServer(creator, "read-any", "projects") ? { members: creator } : {};
+
+        const ability = createAbility(await getUserPermissions());
         
         // See if any projects already exist with the generated slug
         const ticketProject = await projectModel.findOne({$and: [
+            { $or: [
+                accessibleBy(ability, "read").ofType("projects"),
+                accessibleBy(ability, "read-any").ofType("projects")
+            ]},
             { _id: new mongoose.Types.ObjectId(ticket.project)},
             { archived: false },
-            {...userAccessQuery}
         ]}) as Project;
     
         if (!ticketProject) {
             throw new Error(`No project found with ID ${ticket.project} or user does not have access to it.`);
         }
-    
+        
         const createdTicket = await ticketModel.create(ticket);
         // Add the ticket to the project
         ticketProject.tickets.push(createdTicket._id);
         await ticketProject.save();
-
 
         createLogEvent({who: new mongoose.Types.ObjectId(creator), what: LOGGER_EVENTS.ticketCreated, data: JSON.stringify({id: createdTicket._id, number: createdTicket.number })});
 
@@ -45,18 +100,38 @@ export const createTicket = async (ticket: z.infer<typeof NewTicketFormSchema>, 
     }
 }
 
-export const getTicketById = async (id: string, userId: string) => {
+export const getTicketById = async (id: string) => {
     try {
         await dbConnect();
 
-        if(!checkAbilityServer(userId, "read-any", "read", "tickets")) {
+        if(!checkAbilityServer("read-any", "read", "tickets")) {
             throw new Error("User does not have permissions for this action!");
+        }
+
+        const ability = createAbility(await getUserPermissions());
+        // Find the project associated with the ticket
+        const project = await projectModel.findOne({
+            $and: [
+                { $or: [
+                    accessibleBy(ability, "read").ofType("projects"),
+                    accessibleBy(ability, "read-any").ofType("projects")
+                ]},
+                { archived: false },
+                { tickets: new mongoose.Types.ObjectId(id) }
+            ]})
+
+        if (!project) {
+            throw new Error(`No project found for ticket with ID ${id} or user does not have access to it.`);
         }
 
         const ticket = await ticketModel.findById(id)
         .populate({
             path: "project",
             model: projectModel
+        })
+        .populate({
+            path: "type",
+            model: ticketTypeModel
         })
         .populate({
             path: "caller",
@@ -82,7 +157,7 @@ export const createNote = async (ticketId: string, userId: string, note: NoteUiM
     try {
         await dbConnect();
 
-        if(!checkAbilityServer(userId, "update-any", "update", "tickets")) {
+        if(!checkAbilityServer("update-any", "update", "tickets")) {
             throw new Error("User does not have permissions for this action!");
         }
 
@@ -97,7 +172,7 @@ export const createNote = async (ticketId: string, userId: string, note: NoteUiM
             throw new Error(`Ticket with ID ${ticketId} not found.`);
         }
 
-        const userCanAccessProject = (ticket.project as Project).members.includes(userId) || await checkAnyAbilityServer(userId, "read-any", "projects")
+        const userCanAccessProject = ((ticket.project as Project).members as string[]).includes(userId) || await checkAnyAbilityServer("read-any", "projects");
 
         if (!userCanAccessProject) {
             throw new Error(`User does not have access for this action`);
@@ -121,7 +196,7 @@ export const updateNote = async (noteId: string, ticketId: string, userId: strin
     try {
         await dbConnect();
 
-        if(!checkAbilityServer(userId, "update-any", "update", "tickets")) {
+        if(!checkAbilityServer("update-any", "update", "tickets")) {
             throw new Error("User does not have permissions for this action!");
         }
 
@@ -136,7 +211,7 @@ export const updateNote = async (noteId: string, ticketId: string, userId: strin
             throw new Error(`Ticket with ID ${ticketId} not found.`);
         }
 
-        const userCanAccessProject = (ticket.project as Project).members.includes(userId) || await checkAnyAbilityServer(userId, "read-any", "projects")
+        const userCanAccessProject = ((ticket.project as Project).members as string[]).includes(userId) || await checkAnyAbilityServer("read-any", "projects");
 
         if (!userCanAccessProject) {
             throw new Error(`User does not have access for this action`);
@@ -163,7 +238,7 @@ export const deleteNote = async (noteId: string, ticketId: string, userId: strin
     try {
         await dbConnect();
 
-        if(!checkAbilityServer(userId, "update-any", "update", "tickets")) {
+        if(!checkAbilityServer("update-any", "update", "tickets")) {
             throw new Error("User does not have permissions for this action!");
         }
 
@@ -178,7 +253,7 @@ export const deleteNote = async (noteId: string, ticketId: string, userId: strin
             throw new Error(`Ticket with ID ${ticketId} not found.`);
         }
 
-        const userCanAccessProject = (ticket.project as Project).members.includes(userId) || await checkAnyAbilityServer(userId, "read-any", "projects")
+        const userCanAccessProject = ((ticket.project as Project).members as string[]).includes(userId) || await checkAnyAbilityServer("read-any", "projects");
 
         if (!userCanAccessProject) {
             throw new Error(`User does not have access for this action`);

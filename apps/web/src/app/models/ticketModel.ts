@@ -1,16 +1,25 @@
 import mongoose from "mongoose";
 import { User } from "./userModel";
 import { Project } from "./projectModel";
+import { TicketType } from "./ticketTypeModel";
+import counterModel from "./counterModel";
+
+export type ContactType = "self-service" | "email" | "phone" | "in-person";
+export type TicketState = "new" | "in-progress" | "on-hold" | "work-completed" | "resolved";
+export type TicketImpact = "1" | "2" | "3" | "4";
+export type TicketUrgency = "1" | "2" | "3" | "4";
+export type TicketPriority = "1" | "2" | "3" | "4";
 
 export interface Ticket extends mongoose.Document {
-    number: string;
+    number: number;
+    type: mongoose.Types.ObjectId | TicketType | string | null;
     project: mongoose.Types.ObjectId | string | Project | null;
     caller: mongoose.Types.ObjectId | User | string | null;
-    contactType: "self-service" | "email" | "phone" | "in-person";
-    state: "new" | "in-progress" | "on-hold" | "work-completed" | "resolved";
-    impact: "1" | "2" | "3" | "4";
-    urgency: "1" | "2" | "3" | "4";
-    priority: "1" | "2" | "3" | "4";
+    contactType: ContactType;
+    state: TicketState;
+    impact: TicketImpact;
+    urgency: TicketUrgency;
+    priority: TicketPriority;
     assignedTo: mongoose.Types.ObjectId | User | string | null;
     category: string;
     shortDescription: string;
@@ -20,6 +29,8 @@ export interface Ticket extends mongoose.Document {
     resolutionInformation: {
         resolutionSummary: string;
     };
+    createdAt: Date;
+    updatedAt: Date;
 }
 
 export interface Note extends mongoose.Document {
@@ -38,8 +49,11 @@ export interface Attachment extends mongoose.Document {
 
 const ticketSchema = new mongoose.Schema<Ticket>({
     number: {
-        type: String,
-        required: true
+        type: Number
+    },
+    type: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "TicketType",
     },
     project: {
         type: mongoose.Schema.Types.ObjectId,
@@ -136,7 +150,24 @@ const ticketSchema = new mongoose.Schema<Ticket>({
             type: String,
             minlength: 1
         }
+    },
+    createdAt: {
+        type: Date,
+        default: Date.now
+    },
+    updatedAt: {
+        type: Date,
+        default: null
     }
+})
+
+ticketSchema.index({ number: 1 }, { unique: true });
+
+ticketSchema.pre<Ticket>('save', async function(next) {
+    const counter = await counterModel.findByIdAndUpdate({_id: 'ticketNumber'}, { $inc: { seq: 1 } }, { new: true, upsert: true });
+    this.number = counter ? counter.seq : 1;
+    this.updatedAt = new Date();
+    next();
 })
 
 export default mongoose.models.Ticket || mongoose.model<Ticket>("Ticket", ticketSchema);

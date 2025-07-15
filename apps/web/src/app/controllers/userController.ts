@@ -16,6 +16,9 @@ import permissionsModel from "../models/permissionsModel";
 import EditUserFormSchema from "../components/Users/EditUserForm/EditUserFormSchema";
 import PasswordResetByAdminEmailTemplate from "../emails/passwordChanged";
 import { checkAbilityServer } from "../utils/checkAbilityServer";
+import { getServerSession } from "next-auth";
+import { authOptions } from "../config/authOptions";
+import Mustache from "mustache";
 
 export const isThereUsers = async () => {
     await dbConnect();
@@ -81,7 +84,7 @@ export const updateUser = async (user: z.infer<typeof EditUserFormSchema>, fromU
     try {
         await dbConnect();
 
-        if(!checkAbilityServer(user.updater, "update-any", "update", "projects")) {
+        if(!checkAbilityServer("update-any", "update", "projects")) {
             throw new Error("User does not have permissions for this action!");
         }
 
@@ -279,11 +282,17 @@ export const getUsers = async (id: string[]): Promise<User[]|null> => {
     }
 }
 
-export const getUserPermissions = async (id: string) => {
+export const getUserPermissions = async () => {
+    const session = await getServerSession(authOptions);
+    const userSession = session?.user;
+    if (!userSession || !userSession.id) {
+        throw new Error("User not authenticated");
+    }
+
     try {
         await dbConnect();
 
-        const user = await userModel.findOne({_id: new mongoose.Types.ObjectId(id)})
+        const user = await userModel.findOne({_id: new mongoose.Types.ObjectId(userSession.id)})
         .populate({
             path: "access",
             model: permissionsModel
@@ -292,7 +301,9 @@ export const getUserPermissions = async (id: string) => {
         if (!user) {
             return JSON.parse("[]");
         }
-        return JSON.parse(user.access.permissions);
+        return JSON.parse(Mustache.render(user.access.permissions, {
+            self: userSession.id,
+        }));
     } catch (error) {
         throw error;
     }

@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@casl/ability": "^6.7.3",
+    "@casl/mongoose": "^8.0.3",
     "@casl/react": "^5.0.0",
     "@fortawesome/fontawesome-svg-core": "^6.7.2",
     "@fortawesome/free-brands-svg-icons": "^6.7.2",
@@ -48,6 +49,7 @@
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
+    "@types/mustache": "^4.2.6",
     "@types/node": "^20",
     "@types/nodemailer": "^6.4.17",
     "@types/react": "^19",

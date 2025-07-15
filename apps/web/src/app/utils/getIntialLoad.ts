@@ -26,7 +26,7 @@ export const getInitialLoad = async (
     let permissions = null;
     let userAvatar = null;
     if (session && session.user) {
-        permissions = await getUserPermissions(session.user.id);
+        permissions = await getUserPermissions();
         userAvatar = await getUserAvatar(session.user.id);
     }
     return {

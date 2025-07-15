@@ -30,9 +30,10 @@ const projectSchema = new mongoose.Schema<Project>({
         type: String,
         default: ""
     },
-    tickets: {
-        type: []
-    },
+    tickets: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Tickets"
+    }],
     boughtWorkHours: {
         type: Number,
         default: 0

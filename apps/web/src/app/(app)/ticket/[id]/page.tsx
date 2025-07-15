@@ -3,9 +3,11 @@ import { Button } from "@/app/components/ui/button";
 import { authOptions } from "@/app/config/authOptions";
 import { getAllProjects } from "@/app/controllers/projectController";
 import { getTicketById } from "@/app/controllers/ticketController";
+import { getAllTicketTypes } from "@/app/controllers/ticketTypeController";
 import { getAllUsers, getUserPermissions } from "@/app/controllers/userController";
 import { User } from "@/app/models/userModel";
 import { checkUpdateAccess } from "@/app/utils/checkAbility";
+import formatTicketNumber from "@/app/utils/formatTicketNumber";
 import { handleNotFound } from "@/app/utils/redirectHandlers";
 import { getServerSession } from "next-auth";
 import Link from "next/link";
@@ -15,7 +17,7 @@ export default async function UpdateTicketPage ({ params }: { params: Promise<{ 
     const session = await getServerSession(authOptions);
     const user = session?.user;
 
-    const permissions = await getUserPermissions(user?.id || "");
+    const permissions = await getUserPermissions();
     checkUpdateAccess(permissions, "tickets");
 
     const retrievedTicket = await getTicketById(id, user?.id || "");
@@ -25,18 +27,20 @@ export default async function UpdateTicketPage ({ params }: { params: Promise<{ 
 
     const retrievedUsers = await getAllUsers() as User[]
     const projects = await getAllProjects();
+    const ticketTypes = await getAllTicketTypes();
 
     return (
         <main className="flex flex-col w-full px-4 md:px-8 mt-6 md:mt-[10vh]">
             <div className="bg-gradient-to-r from-sky-500 to-indigo-500 bg-clip-text max-h-fit">
-                <h1 className="text-2xl md:text-4xl text-transparent">New Ticket</h1>
+                <h1 className="text-2xl md:text-4xl text-transparent">Update Ticket {formatTicketNumber(retrievedTicket.number, retrievedTicket.type)}</h1>
                 <p className="text-lg md:text-xl text-transparent">Create a new ticket</p>
             </div>
             <Link href="/ticket" className="my-3 w-fit"><Button type="button">Back to Tickets</Button></Link>
 
             <UpdateTicketForm ticket={JSON.parse(JSON.stringify(retrievedTicket))} 
                               projects={JSON.parse(JSON.stringify(projects))} 
-                              resources={JSON.parse(JSON.stringify(retrievedUsers))}/>
+                              resources={JSON.parse(JSON.stringify(retrievedUsers))}
+                              ticketTypes={JSON.parse(JSON.stringify(ticketTypes))}/>
         </main>
     )
 }
