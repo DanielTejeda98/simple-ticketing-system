@@ -12,6 +12,7 @@ import ProjectAssignedEmailTemplate from "../emails/projectAssigned";
 import userModel from "../models/userModel";
 import { authOptions } from "../config/authOptions";
 import { getServerSession } from "next-auth";
+import { checkAuthAndGetUserId } from "../utils/serverHelpers";
 import { accessibleBy } from "@casl/mongoose";
 import { createAbility } from "../lib/appAbility";
 import { checkAbility } from "../utils/checkAbility";
@@ -150,6 +151,27 @@ export const getAllProjects = async (includeArchived?: boolean): Promise<Project
     }
 }
 
+export const getAllProjectIds = async (includeArchived?: boolean): Promise<Project[]> => {
+    try {
+        await dbConnect();
+        const ability = createAbility(await getUserPermissions());
+
+        const findQuery = {
+            $and: [
+                { $or: [
+                    accessibleBy(ability, "read").ofType("projects"),
+                    accessibleBy(ability, "read-any").ofType("projects")
+                ]},
+                {...!includeArchived ? { archived: false } : {}}
+            ]
+        }
+            
+        return await projectModel.find(findQuery).select("_id").exec()
+    } catch (error) {
+        throw error;
+    }
+}
+
 export const getAllArchivedProjects = async (): Promise<Project[]> => {
     try {
         await dbConnect();
@@ -221,15 +243,6 @@ const sendResourceLeadChangeNotification = async (resourceLead: string, project:
         throw error;
     }
     
-}
-
-const checkAuthAndGetUserId = async () => {
-    const session = await getServerSession(authOptions);
-    if (!session) {
-        throw new Error("Must be signed in for this action");
-    }
-
-    return session.user.id;
 }
 
 const processProjectMembers = (updatedMembers: string[], lead?: mongoose.Types.ObjectId | null, owner?: mongoose.Types.ObjectId | null)

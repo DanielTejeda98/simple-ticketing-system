@@ -30,7 +30,7 @@ export interface Ticket extends mongoose.Document {
         resolutionSummary: string;
     };
     createdAt: Date;
-    updatedAt: Date;
+    updatedAt?: Date;
 }
 
 export interface Note extends mongoose.Document {

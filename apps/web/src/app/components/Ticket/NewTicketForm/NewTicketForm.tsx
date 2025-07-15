@@ -1,13 +1,26 @@
-"use client"
+"use client";
 
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import NewTicketFormSchema from "./NewTicketFormSchema";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormDescription } from "../../ui/form";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormDescription,
+} from "../../ui/form";
 import { Alert, AlertDescription, AlertTitle } from "../../ui/alert";
 import { Input } from "../../ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../../ui/select";
 import User from "../../Global/User";
 import mongoose from "mongoose";
 import { Textarea } from "../../ui/textarea";
@@ -18,39 +31,57 @@ import { Button } from "../../ui/button";
 import { TicketType } from "@/app/models/ticketTypeModel";
 import { ContactType, TicketImpact, TicketPriority, TicketState, TicketUrgency } from "@/app/models/ticketModel";
 
-export default function NewTicketForm({projects, resources, ticketTypes}: { projects: Project[], resources: UserModel[], ticketTypes: TicketType[]}) {
+export default function NewTicketForm({
+    projects,
+    resources,
+    ticketTypes
+}: { 
+    projects: Project[], 
+    resources: UserModel[]
+    ticketTypes: TicketType[]}) {
     const newTicketForm = useForm<z.infer<typeof NewTicketFormSchema>>({
-        resolver: zodResolver(NewTicketFormSchema)
+        resolver: zodResolver(NewTicketFormSchema),
+        defaultValues: {
+      project:
+        projects.length === 1
+          ? (projects[0]._id as mongoose.Types.ObjectId).toString()
+          : "",
+      contactType: "self-service",
+      state: "new",
+    },
     })
 
-    async function onSubmit(values: z.infer<typeof NewTicketFormSchema>) {
-            // When successful, it will redirect the user, on error, it will return an error
-            const error = await CreateTicketAction(values) as Error;
-            if (error) {
-                newTicketForm.setError("root", {
-                    message: typeof error === "object" ? error.message : error
-                })
-    
-                window.scrollTo({ top: 0, behavior: "smooth" });
-            }
-        }
+  async function onSubmit(values: z.infer<typeof NewTicketFormSchema>) {
+    // When successful, it will redirect the user, on error, it will return an error
+    const error = (await CreateTicketAction(values)) as Error;
+    if (error) {
+      newTicketForm.setError("root", {
+        message: typeof error === "object" ? error.message : error,
+      });
 
-    const errors = newTicketForm.formState.errors;
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  }
 
-    return (
-        <Form {...newTicketForm}>
-            <form onSubmit={newTicketForm.handleSubmit(onSubmit)} className="space-y-8">
-                <div className="flex gap-2 mt-8">
-                    <Button type="submit" className="w-fit">Create ticket</Button>
-                </div>
-                { errors?.root?.message ? (
-                    <Alert variant={"destructive"}>
-                        <AlertTitle>Error</AlertTitle>
-                        <AlertDescription>
-                            {errors.root.message}
-                        </AlertDescription>
-                    </Alert>
-                ) : null }
+  const errors = newTicketForm.formState.errors;
+
+  return (
+    <Form {...newTicketForm}>
+      <form
+        onSubmit={newTicketForm.handleSubmit(onSubmit)}
+        className="space-y-8"
+      >
+        <div className="flex gap-2 mt-8">
+          <Button type="submit" className="w-fit">
+            Create ticket
+          </Button>
+        </div>
+        {errors?.root?.message ? (
+          <Alert variant={"destructive"}>
+            <AlertTitle>Error</AlertTitle>
+            <AlertDescription>{errors.root.message}</AlertDescription>
+          </Alert>
+        ) : null}
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-1">
                     <FormField
@@ -61,7 +92,7 @@ export default function NewTicketForm({projects, resources, ticketTypes}: { proj
                                 <FormLabel>Ticket Type</FormLabel>
                                 <FormControl>
                                     <Select {...field}
-                                            defaultValue={ticketTypes.length === 1 ? (projects[0]._id as mongoose.Types.ObjectId).toString() : ""}
+                                            defaultValue={ticketTypes.length === 1 ? (ticketTypes[0]._id as mongoose.Types.ObjectId).toString() : ""}
                                             onValueChange={(e) => newTicketForm.setValue("type", e)}>
                                         <SelectTrigger className="w-full">
                                             <SelectValue placeholder="Select type..." />
@@ -75,69 +106,97 @@ export default function NewTicketForm({projects, resources, ticketTypes}: { proj
                                         </SelectContent>
                                     </Select>
                                 </FormControl>
-                                <FormDescription className={errors?.project?.message ? "text-destructive" : ""}>
-                                    { errors.project?.message ? errors.project?.message : null }
+                                <FormDescription className={errors?.type?.message ? "text-destructive" : ""}>
+                                    { errors.type?.message ? errors.type?.message : null }
                                 </FormDescription>
                             </FormItem>
                         )}>
                     </FormField>
 
-                    <FormField
-                        control={newTicketForm.control}
-                        name="project"
-                        render={({ field }) => (
-                            <FormItem className="md:w-1/2">
-                                <FormLabel>Project</FormLabel>
-                                <FormControl>
-                                    <Select {...field}
-                                            defaultValue={projects.length === 1 ? (projects[0]._id as mongoose.Types.ObjectId).toString() : ""}
-                                            onValueChange={(e) => newTicketForm.setValue("project", e)}>
-                                        <SelectTrigger className="w-full">
-                                            <SelectValue placeholder="Unassigned" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            { projects.map(project => (
-                                                <SelectItem value={(project._id as mongoose.Types.ObjectId).toString()} key={(project._id as mongoose.Types.ObjectId).toString()}>
-                                                    { project.name }
-                                                </SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
-                                </FormControl>
-                                <FormDescription className={errors?.project?.message ? "text-destructive" : ""}>
-                                    { errors.project?.message ? errors.project?.message : null }
-                                </FormDescription>
-                            </FormItem>
-                        )}>
-                    </FormField>
+          <FormField
+            control={newTicketForm.control}
+            name="project"
+            render={({ field }) => (
+              <FormItem className="md:w-1/2">
+                <FormLabel>Project</FormLabel>
+                <FormControl>
+                  <Select
+                    {...field}
+                    defaultValue={
+                      projects.length === 1
+                        ? (
+                            projects[0]._id as mongoose.Types.ObjectId
+                          ).toString()
+                        : ""
+                    }
+                    onValueChange={(e) => newTicketForm.setValue("project", e)}
+                  >
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Unassigned" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {projects.map((project) => (
+                        <SelectItem
+                          value={(
+                            project._id as mongoose.Types.ObjectId
+                          ).toString()}
+                          key={(
+                            project._id as mongoose.Types.ObjectId
+                          ).toString()}
+                        >
+                          {project.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </FormControl>
+                <FormDescription
+                  className={errors?.project?.message ? "text-destructive" : ""}
+                >
+                  {errors.project?.message ? errors.project?.message : null}
+                </FormDescription>
+              </FormItem>
+            )}
+          ></FormField>
 
-                    <FormField
-                        control={newTicketForm.control}
-                        name="caller"
-                        render={({ field }) => (
-                            <FormItem className="md:w-1/2">
-                                <FormLabel>Caller</FormLabel>
-                                <FormControl>
-                                    <Select {...field} 
-                                            onValueChange={(e) => newTicketForm.setValue("caller", e)}>
-                                        <SelectTrigger className="w-full">
-                                            <SelectValue placeholder="Unassigned" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            { resources.map(resource => (
-                                                <SelectItem value={(resource._id as mongoose.Types.ObjectId).toString()} key={(resource._id as mongoose.Types.ObjectId).toString()}>
-                                                    <User user={resource} onlyName></User>
-                                                </SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
-                                </FormControl>
-                                <FormDescription className={errors?.caller?.message ? "text-destructive" : ""}>
-                                    { errors.caller?.message ? errors.caller?.message : null }
-                                </FormDescription>
-                            </FormItem>
-                        )}>
-                    </FormField>
+          <FormField
+            control={newTicketForm.control}
+            name="caller"
+            render={({ field }) => (
+              <FormItem className="md:w-1/2">
+                <FormLabel>Caller</FormLabel>
+                <FormControl>
+                  <Select
+                    {...field}
+                    onValueChange={(e) => newTicketForm.setValue("caller", e)}
+                  >
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Unassigned" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {resources.map((resource) => (
+                        <SelectItem
+                          value={(
+                            resource._id as mongoose.Types.ObjectId
+                          ).toString()}
+                          key={(
+                            resource._id as mongoose.Types.ObjectId
+                          ).toString()}
+                        >
+                          <User user={resource} onlyName></User>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </FormControl>
+                <FormDescription
+                  className={errors?.caller?.message ? "text-destructive" : ""}
+                >
+                  {errors.caller?.message ? errors.caller?.message : null}
+                </FormDescription>
+              </FormItem>
+            )}
+          ></FormField>
 
                     <FormField
                         control={newTicketForm.control}
@@ -271,92 +330,132 @@ export default function NewTicketForm({projects, resources, ticketTypes}: { proj
                         )}>
                     </FormField>
 
-                    <FormField
-                        control={newTicketForm.control}
-                        name="assignedTo"
-                        render={({ field }) => (
-                            <FormItem className="md:w-1/2">
-                                <FormLabel>Assigned To</FormLabel>
-                                <FormControl>
-                                    <Select {...field} 
-                                            onValueChange={(e) => newTicketForm.setValue("assignedTo", e)}>
-                                        <SelectTrigger className="w-full">
-                                            <SelectValue placeholder="Unassigned" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            { resources.map(resource => (
-                                                <SelectItem value={(resource._id as mongoose.Types.ObjectId).toString()} key={(resource._id as mongoose.Types.ObjectId).toString()}>
-                                                    <User user={resource} onlyName></User>
-                                                </SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
-                                </FormControl>
-                                <FormDescription className={errors?.assignedTo?.message ? "text-destructive" : ""}>
-                                    { errors.assignedTo?.message ? errors.assignedTo?.message : null }
-                                </FormDescription>
-                            </FormItem>
-                        )}>
-                    </FormField>
+          <FormField
+            control={newTicketForm.control}
+            name="assignedTo"
+            render={({ field }) => (
+              <FormItem className="md:w-1/2">
+                <FormLabel>Assigned To</FormLabel>
+                <FormControl>
+                  <Select
+                    {...field}
+                    onValueChange={(e) =>
+                      newTicketForm.setValue("assignedTo", e)
+                    }
+                  >
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Unassigned" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {resources.map((resource) => (
+                        <SelectItem
+                          value={(
+                            resource._id as mongoose.Types.ObjectId
+                          ).toString()}
+                          key={(
+                            resource._id as mongoose.Types.ObjectId
+                          ).toString()}
+                        >
+                          <User user={resource} onlyName></User>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </FormControl>
+                <FormDescription
+                  className={
+                    errors?.assignedTo?.message ? "text-destructive" : ""
+                  }
+                >
+                  {errors.assignedTo?.message
+                    ? errors.assignedTo?.message
+                    : null}
+                </FormDescription>
+              </FormItem>
+            )}
+          ></FormField>
 
-                    <FormField
-                        control={newTicketForm.control}
-                        name="category"
-                        render={({ field }) => (
-                            <FormItem className="md:w-1/2">
-                                <FormLabel>Category</FormLabel>
-                                <FormControl>
-                                    <Select {...field} defaultValue={field.value}
-                                            onValueChange={(e) => newTicketForm.setValue("category", e)}>
-                                        <SelectTrigger>
-                                            <SelectValue placeholder="Select category" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="google-workspace">Google Workspace</SelectItem>
-                                            <SelectItem value="website">Website</SelectItem>
-                                            <SelectItem value="google-business">Google Business</SelectItem>
-                                        </SelectContent>
-                                    </Select>
-                                </FormControl>
-                                <FormDescription className={errors?.category?.message ? "text-destructive" : ""}>
-                                    { errors.category?.message ? errors.category?.message : null }
-                                </FormDescription>
-                            </FormItem>
-                        )}>
-                    </FormField>
-                </div>
-                <FormField
-                    control={newTicketForm.control}
-                    name="shortDescription"
-                    render={({ field }) => (
-                        <FormItem className="w-full">
-                            <FormLabel>Short Description</FormLabel>
-                            <FormControl>
-                                <Input {...field} />
-                            </FormControl>
-                            <FormDescription className={errors?.shortDescription?.message ? "text-destructive" : ""}>
-                                { errors.shortDescription?.message ? errors.shortDescription?.message : null }
-                            </FormDescription>
-                        </FormItem>
-                    )}>
-                </FormField>
-                
-                <FormField
-                    control={newTicketForm.control}
-                    name="description"
-                    render={({ field }) => (
-                        <FormItem className="w-full">
-                            <FormLabel>Description</FormLabel>
-                            <FormControl>
-                                <Textarea {...field} />
-                            </FormControl>
-                            <FormDescription className={errors?.description?.message ? "text-destructive" : ""}>
-                                { errors.description?.message ? errors.description?.message : null }
-                            </FormDescription>
-                        </FormItem>
-                    )}>
-                </FormField>
-            </form>
-        </Form>
-    )
+          <FormField
+            control={newTicketForm.control}
+            name="category"
+            render={({ field }) => (
+              <FormItem className="md:w-1/2">
+                <FormLabel>Category</FormLabel>
+                <FormControl>
+                  <Select
+                    {...field}
+                    defaultValue={field.value}
+                    onValueChange={(e) => newTicketForm.setValue("category", e)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select category" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="google-workspace">
+                        Google Workspace
+                      </SelectItem>
+                      <SelectItem value="website">Website</SelectItem>
+                      <SelectItem value="google-business">
+                        Google Business
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                </FormControl>
+                <FormDescription
+                  className={
+                    errors?.category?.message ? "text-destructive" : ""
+                  }
+                >
+                  {errors.category?.message ? errors.category?.message : null}
+                </FormDescription>
+              </FormItem>
+            )}
+          ></FormField>
+        </div>
+        <FormField
+          control={newTicketForm.control}
+          name="shortDescription"
+          render={({ field }) => (
+            <FormItem className="w-full">
+              <FormLabel>Short Description</FormLabel>
+              <FormControl>
+                <Input {...field} />
+              </FormControl>
+              <FormDescription
+                className={
+                  errors?.shortDescription?.message ? "text-destructive" : ""
+                }
+              >
+                {errors.shortDescription?.message
+                  ? errors.shortDescription?.message
+                  : null}
+              </FormDescription>
+            </FormItem>
+          )}
+        ></FormField>
+
+        <FormField
+          control={newTicketForm.control}
+          name="description"
+          render={({ field }) => (
+            <FormItem className="w-full">
+              <FormLabel>Description</FormLabel>
+              <FormControl>
+                <Textarea {...field} />
+              </FormControl>
+              <FormDescription
+                className={
+                  errors?.description?.message ? "text-destructive" : ""
+                }
+              >
+                {errors.description?.message
+                  ? errors.description?.message
+                  : null}
+              </FormDescription>
+            </FormItem>
+          )}
+        ></FormField>
+      </form>
+    </Form>
+  );
 }

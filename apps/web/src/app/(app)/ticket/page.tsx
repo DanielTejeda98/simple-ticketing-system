@@ -1,17 +1,17 @@
+import TicketTableRow from "@/app/components/Ticket/TicketTableRow";
 import { Button } from "@/app/components/ui/button";
-import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from "@/app/components/ui/table";
-import { getAllTickets } from "@/app/controllers/ticketController";
-import { TicketType } from "@/app/models/ticketTypeModel";
-import formatTicketNumber from "@/app/utils/formatTicketNumber";
+import { Table, TableBody, TableCaption, TableHead, TableHeader, TableRow } from "@/app/components/ui/table";
 import Link from "next/link";
+import { getAllTickets } from "@/app/controllers/ticketController";
+import { Ticket } from "@/app/models/ticketModel";
 
 /**
  * TODO
- * - Add a filter to the table 
+ * - Add a filter to the table
  */
-export default async function ProjectsPage () {
-    const tickets = await getAllTickets();
 
+export default async function TicketsPage () {
+    const tickets = JSON.parse(JSON.stringify(await getAllTickets())) as Ticket[];
     return (
         <main className="flex flex-col w-full px-4 md:px-8 mt-6 md:mt-[10vh]">
             <div className="bg-gradient-to-r from-sky-500 to-indigo-500 bg-clip-text max-h-fit">
@@ -34,26 +34,14 @@ export default async function ProjectsPage () {
                         <TableHead>Project</TableHead>
                         <TableHead>Category</TableHead>
                         <TableHead>Assigned to</TableHead>
+                        <TableHead>Last Update</TableHead>
+                        <TableHead>Updated by</TableHead>
                     </TableRow>
                 </TableHeader>
                 <TableBody>
-                    {
-                        tickets?.map(ticket => (
-                            <TableRow key={ticket._id!.toString()} className="hover:bg-slate-100">
-                                <TableCell>
-                                    <Link href={`/ticket/${ticket._id}`} className="text-blue-500 hover:underline">{formatTicketNumber(ticket.number, (ticket.type as TicketType))}</Link>
-                                </TableCell>
-                                <TableCell>{new Date(ticket.createdAt).toLocaleDateString()}</TableCell>
-                                <TableCell>{ticket.shortDescription}</TableCell>
-                                <TableCell>{ticket.caller?.firstName} {ticket.caller?.lastName}</TableCell>
-                                <TableCell>{ticket.priority}</TableCell>
-                                <TableCell>{ticket.state}</TableCell>
-                                <TableCell>{ticket.project?.name}</TableCell>
-                                <TableCell>{ticket.category}</TableCell>
-                                <TableCell>{ticket.assignedTo?.firstName} {ticket.assignedTo?.lastName}</TableCell>
-                            </TableRow>
-                        )) ?? "No tickets found"
-                    }
+                    {tickets.map((ticket) => (
+                        <TicketTableRow key={ticket._id!.toString()} ticket={ticket} />
+                    ))}
                 </TableBody>
             </Table>
         </main>
